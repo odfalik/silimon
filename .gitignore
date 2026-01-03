@@ -15,6 +15,7 @@ DerivedData/
 
 # Build artifacts
 /build/
+*.tar.gz
 
 # IDE
 .idea/
