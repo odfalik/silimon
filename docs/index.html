@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silimon - Apple Silicon Performance Monitor</title>
+    <meta name="description" content="A lightweight macOS menu bar app for monitoring Apple Silicon performance metrics. No sudo required.">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --fg: #fafafa;
+            --accent: #ff9500;
+            --accent-dim: #ff950033;
+            --gray: #888;
+            --card-bg: #1a1a1a;
+            --border: #333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 80px 0;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero .tagline {
+            font-size: 1.5rem;
+            color: var(--gray);
+            margin-bottom: 32px;
+        }
+
+        .hero .highlight {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* Install */
+        .install {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 0 auto 48px;
+            max-width: 500px;
+        }
+
+        .install pre {
+            background: #000;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .install code {
+            color: var(--accent);
+        }
+
+        .install .comment {
+            color: var(--gray);
+        }
+
+        /* Screenshot */
+        .screenshot {
+            text-align: center;
+            margin: 48px 0;
+        }
+
+        .screenshot img {
+            max-width: 348px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        /* Features */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            padding: 48px 0;
+        }
+
+        .feature {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .feature h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .feature .icon {
+            font-size: 1.5rem;
+        }
+
+        .feature p {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        /* Comparison */
+        .comparison {
+            padding: 48px 0;
+        }
+
+        .comparison h2 {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: #222;
+            font-weight: 600;
+        }
+
+        .comparison-table .check {
+            color: #4ade80;
+        }
+
+        .comparison-table .cross {
+            color: #888;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 48px 0;
+            color: var(--gray);
+            border-top: 1px solid var(--border);
+            margin-top: 48px;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        /* Badges */
+        .badges {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .badge.accent {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="hero">
+            <h1>Silimon</h1>
+            <p class="tagline">
+                Apple Silicon performance metrics in your menu bar.<br>
+                <span class="highlight">No sudo required.</span>
+            </p>
+
+            <div class="badges">
+                <span class="badge">macOS 13+</span>
+                <span class="badge">Apple Silicon</span>
+                <span class="badge accent">MIT License</span>
+            </div>
+
+            <div class="install">
+                <pre><code><span class="comment"># Install with Homebrew</span>
+brew tap odfalik/silimon
+brew install silimon
+
+<span class="comment"># Launch</span>
+silimon</code></pre>
+            </div>
+        </section>
+
+        <section class="screenshot">
+            <img src="https://github.com/user-attachments/assets/6d42c7e4-9101-4628-b074-5bc688366b15" alt="Silimon screenshot">
+        </section>
+
+        <section class="features">
+            <div class="feature">
+                <h3><span class="icon">⚡</span> Real-time Power</h3>
+                <p>Monitor CPU, GPU, and Neural Engine power consumption in watts. See exactly how much power your Mac is using.</p>
+            </div>
+
+            <div class="feature">
+                <h3><span class="icon">🎯</span> CPU Clusters</h3>
+                <p>Track E-core and P-core usage and frequencies separately. Understand when your Mac shifts between efficiency and performance.</p>
+            </div>
+
+            <div class="feature">
+                <h3><span class="icon">🎮</span> GPU Metrics</h3>
+                <p>See GPU utilization percentage and frequency. Know when graphics-intensive tasks are running.</p>
+            </div>
+
+            <div class="feature">
+                <h3><span class="icon">💾</span> Memory Pressure</h3>
+                <p>Monitor RAM usage, memory pressure state, and swap. Get warned before your Mac starts slowing down.</p>
+            </div>
+
+            <div class="feature">
+                <h3><span class="icon">🔋</span> Battery Status</h3>
+                <p>Battery level, charging state, and time remaining. Never be surprised by a dead battery.</p>
+            </div>
+
+            <div class="feature">
+                <h3><span class="icon">📊</span> History Charts</h3>
+                <p>60-second sparkline charts show trends at a glance. Export data to CSV or JSON for analysis.</p>
+            </div>
+        </section>
+
+        <section class="comparison">
+            <h2>Why Silimon?</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Feature</th>
+                    <th>Silimon</th>
+                    <th>powermetrics</th>
+                    <th>Activity Monitor</th>
+                </tr>
+                <tr>
+                    <td>No sudo required</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="check">✓</td>
+                </tr>
+                <tr>
+                    <td>Menu bar app</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                </tr>
+                <tr>
+                    <td>Power consumption (W)</td>
+                    <td class="check">✓</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                </tr>
+                <tr>
+                    <td>E/P-core frequencies</td>
+                    <td class="check">✓</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                </tr>
+                <tr>
+                    <td>History charts</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                </tr>
+                <tr>
+                    <td>Data export</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                </tr>
+                <tr>
+                    <td>Open source</td>
+                    <td class="check">✓</td>
+                    <td class="cross">✗</td>
+                    <td class="cross">✗</td>
+                </tr>
+                <tr>
+                    <td>Free</td>
+                    <td class="check">✓</td>
+                    <td class="check">✓</td>
+                    <td class="check">✓</td>
+                </tr>
+            </table>
+        </section>
+    </div>
+
+    <footer>
+        <p>
+            Made by <a href="https://github.com/odfalik">@odfalik</a> ·
+            <a href="https://github.com/odfalik/silimon">GitHub</a> ·
+            <a href="https://github.com/odfalik/silimon/issues">Report Issue</a>
+        </p>
+        <p style="margin-top: 12px; font-size: 12px;">
+            MIT License · macOS 13+ · Apple Silicon only
+        </p>
+    </footer>
+</body>
+</html>

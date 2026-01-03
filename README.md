@@ -109,6 +109,8 @@ make release    # Build release version
 make clean      # Clean build artifacts
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for testing and contribution guidelines.
+
 </details>
 
 ## License

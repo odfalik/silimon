@@ -30,6 +30,11 @@ let package = Package(
             linkerSettings: [
                 .linkedFramework("IOKit")
             ]
+        ),
+        .testTarget(
+            name: "SilimonTests",
+            dependencies: [],
+            path: "Tests/SilimonTests"
         )
     ]
 )

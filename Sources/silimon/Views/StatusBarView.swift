@@ -1,9 +1,46 @@
 import AppKit
 
-class StatusBarView: NSView {
+class StatusBarView: NSView, NSAccessibilityGroup {
     private var metrics: Metrics = .empty
     private var history: [Metrics] = []
     private var settings: Settings
+
+    // MARK: - Accessibility
+
+    override func isAccessibilityElement() -> Bool { true }
+
+    override func accessibilityRole() -> NSAccessibility.Role? { .group }
+
+    override func accessibilityLabel() -> String? {
+        "Silimon system metrics"
+    }
+
+    override func accessibilityValue() -> Any? {
+        buildAccessibilityDescription()
+    }
+
+    private func buildAccessibilityDescription() -> String {
+        var parts: [String] = []
+
+        for metric in settings.metricOrder where settings.isShownInBar(metric) {
+            switch metric {
+            case .power:
+                parts.append("Power: \(Int(metrics.packagePower)) watts")
+            case .cpu:
+                parts.append("CPU: \(Int(max(metrics.eCoreUsage, metrics.pCoreUsage))) percent")
+            case .gpu:
+                parts.append("GPU: \(Int(metrics.gpuUsage)) percent")
+            case .memory:
+                parts.append("Memory: \(Int(metrics.memoryUsagePercent)) percent")
+            case .network:
+                parts.append("Network download: \(NetworkStats.formatBytesPerSec(metrics.networkBytesInPerSec))")
+            case .battery:
+                parts.append("Battery: \(Int(metrics.batteryLevel)) percent\(metrics.batteryIsCharging ? ", charging" : "")")
+            }
+        }
+
+        return parts.isEmpty ? "No metrics displayed" : parts.joined(separator: ", ")
+    }
 
     // Colors for each metric type
     private let powerColor = NSColor.systemOrange

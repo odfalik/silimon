@@ -5,9 +5,15 @@ struct PopoverView: View {
     @ObservedObject var metricsCollector: MetricsCollector
     @ObservedObject var settings: Settings
     @ObservedObject var updateChecker: UpdateChecker
+    @ObservedObject var alertService = AlertService.shared
+    @ObservedObject var onboardingState = OnboardingState.shared
     @State private var isSettingsMode = false
     @State private var draggedMetric: MetricType?
     @State private var showDiagnostics = false
+    @State private var showExportMenu = false
+    @State private var showAlertSettings = false
+    @State private var showProcesses = false
+    @State private var exportCopied = false
     var onSettingsChanged: () -> Void
 
     var body: some View {
@@ -216,6 +222,66 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.bordered)
 
+                Button(action: { showDiagnostics = true }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "stethoscope")
+                            .font(.caption)
+                        Text("Diagnose")
+                            .font(.caption)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                }
+                .buttonStyle(.bordered)
+
+                Menu {
+                    Button(action: {
+                        let csv = ExportService.shared.exportToCSV(Array(metricsCollector.history.samples))
+                        ExportService.shared.copyToClipboard(csv)
+                        exportCopied = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { exportCopied = false }
+                    }) {
+                        Label("Copy as CSV", systemImage: "doc.on.doc")
+                    }
+                    Button(action: {
+                        let json = ExportService.shared.exportToJSON(Array(metricsCollector.history.samples))
+                        ExportService.shared.copyToClipboard(json)
+                        exportCopied = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { exportCopied = false }
+                    }) {
+                        Label("Copy as JSON", systemImage: "doc.on.doc")
+                    }
+                    Divider()
+                    Button(action: {
+                        let csv = ExportService.shared.exportToCSV(Array(metricsCollector.history.samples))
+                        ExportService.shared.saveToFile(csv, defaultName: ExportService.shared.defaultFilename(format: "csv"), fileType: "csv")
+                    }) {
+                        Label("Save CSV...", systemImage: "square.and.arrow.down")
+                    }
+                    Button(action: {
+                        let json = ExportService.shared.exportToJSON(Array(metricsCollector.history.samples))
+                        ExportService.shared.saveToFile(json, defaultName: ExportService.shared.defaultFilename(format: "json"), fileType: "json")
+                    }) {
+                        Label("Save JSON...", systemImage: "square.and.arrow.down")
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: exportCopied ? "checkmark" : "square.and.arrow.up")
+                            .font(.caption)
+                        Text(exportCopied ? "Copied" : "Export")
+                            .font(.caption)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                }
+                .menuStyle(.borderlessButton)
+                .frame(maxWidth: .infinity)
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(6)
+            }
+
+            // Action buttons row 2
+            HStack(spacing: 8) {
                 Button(action: {
                     if let url = URL(string: "https://github.com/odfalik/silimon/issues/new") {
                         NSWorkspace.shared.open(url)
@@ -232,32 +298,19 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.bordered)
 
-                Button(action: { showDiagnostics = true }) {
+                Button(action: { NSApp.terminate(nil) }) {
                     HStack(spacing: 4) {
-                        Image(systemName: "stethoscope")
+                        Image(systemName: "xmark.circle.fill")
                             .font(.caption)
-                        Text("Diagnose")
+                        Text("Quit")
                             .font(.caption)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
             }
-
-            // Action buttons row 2
-            Button(action: { NSApp.terminate(nil) }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.caption)
-                    Text("Quit")
-                        .font(.caption)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
         }
         .padding(.top, 4)
         .sheet(isPresented: $showDiagnostics) {
