@@ -3,9 +3,9 @@
 
 class Silimon < Formula
   desc "Apple Silicon performance monitor for your menu bar"
-  homepage "https://github.com/odfalik/silimon"  # TODO: Update with actual repo
-  url "https://github.com/odfalik/silimon/archive/refs/tags/v0.1.0.tar.gz"  # TODO: Update
-  sha256 "PLACEHOLDER"  # TODO: Update with actual SHA256
+  homepage "https://github.com/odfalik/silimon"
+  url "https://github.com/odfalik/silimon/archive/refs/tags/v0.1.0.tar.gz"
+  sha256 "fe3597e024a1cdf8675deae647e4008756bd4eaf09dfc59e536acd290a9b5bd9"
   license "MIT"
   head "https://github.com/odfalik/silimon.git", branch: "main"
 
