@@ -2,8 +2,23 @@ import SwiftUI
 
 struct PopoverView: View {
     @ObservedObject var metricsCollector: MetricsCollector
+    @ObservedObject var settings: Settings
+    @State private var showSettings = false
+    var onSettingsChanged: () -> Void
 
     var body: some View {
+        if showSettings {
+            SettingsView(
+                settings: settings,
+                showSettings: $showSettings,
+                onSettingsChanged: onSettingsChanged
+            )
+        } else {
+            mainView
+        }
+    }
+
+    private var mainView: some View {
         VStack(spacing: 0) {
             // Header
             HStack {
@@ -19,8 +34,8 @@ struct PopoverView: View {
                         .help(error)
                 }
 
-                Button(action: { NSApp.terminate(nil) }) {
-                    Image(systemName: "xmark.circle.fill")
+                Button(action: { showSettings = true }) {
+                    Image(systemName: "gearshape.fill")
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -37,10 +52,18 @@ struct PopoverView: View {
                     GridItem(.flexible()),
                     GridItem(.flexible())
                 ], spacing: 12) {
-                    GPUView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
-                    CPUView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
-                    MemoryView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
-                    PowerView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+                    if settings.gpuModuleEnabled {
+                        GPUView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+                    }
+                    if settings.cpuModuleEnabled {
+                        CPUView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+                    }
+                    if settings.memoryModuleEnabled {
+                        MemoryView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+                    }
+                    if settings.powerModuleEnabled {
+                        PowerView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+                    }
                 }
                 .padding()
             }
