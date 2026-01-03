@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/odfalik/silimon/compare/v0.1.0...v0.2.0) (2026-01-03)
+
+
+### Features
+
+* add automated releases with release-please ([8496d03](https://github.com/odfalik/silimon/commit/8496d03932da6634432e906e36c4fc3769983996))
+
 ## [0.1.0](https://github.com/odfalik/silimon/releases/tag/v0.1.0) (2025-01-03)
 
 ### Features
