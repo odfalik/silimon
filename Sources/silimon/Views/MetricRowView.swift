@@ -20,11 +20,11 @@ struct MetricRowView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // Drag handle (only in settings mode)
+            // Drag handle (animates in/out)
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.secondary.opacity(0.5))
-                .frame(width: isSettingsMode ? 24 : 0)
+                .frame(width: isSettingsMode ? 28 : 0, alignment: .leading)
                 .opacity(isSettingsMode ? 1 : 0)
                 .clipped()
 
@@ -39,8 +39,7 @@ struct MetricRowView: View {
                 chartView
             }
         }
-        .padding(.leading, 12)
-        .padding(.trailing, 12)
+        .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(10)
