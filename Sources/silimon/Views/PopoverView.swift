@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct PopoverView: View {
     @ObservedObject var metricsCollector: MetricsCollector
     @ObservedObject var settings: Settings
+    @ObservedObject var updateChecker: UpdateChecker
     @State private var isSettingsMode = false
     @State private var draggedMetric: MetricType?
     var onSettingsChanged: () -> Void
@@ -68,6 +69,16 @@ struct PopoverView: View {
                 .font(.headline)
                 .fontWeight(.semibold)
 
+            if updateChecker.updateAvailable {
+                Text("v\(updateChecker.latestVersion ?? "")")
+                    .font(.caption2)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(4)
+            }
+
             Spacer()
 
             if let error = metricsCollector.error {
@@ -76,16 +87,18 @@ struct PopoverView: View {
                     .help(error)
             }
 
-            if metricsCollector.isLowPowerMode {
-                Image(systemName: "leaf.fill")
-                    .foregroundColor(.green)
-                    .font(.caption)
-                    .help("Low Power Mode: sampling at \(String(format: "%.1fs", metricsCollector.effectiveSamplingInterval))")
-            }
-
             Button(action: { isSettingsMode.toggle() }) {
-                Image(systemName: isSettingsMode ? "xmark" : "gearshape.fill")
-                    .foregroundColor(isSettingsMode ? .primary : .secondary)
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: isSettingsMode ? "xmark" : "gearshape.fill")
+                        .foregroundColor(isSettingsMode ? .primary : .secondary)
+
+                    if updateChecker.updateAvailable && !isSettingsMode {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 8, height: 8)
+                            .offset(x: 4, y: -4)
+                    }
+                }
             }
             .buttonStyle(.plain)
         }
@@ -98,6 +111,11 @@ struct PopoverView: View {
 
     private var settingsControls: some View {
         VStack(spacing: 12) {
+            // Update available banner
+            if updateChecker.updateAvailable {
+                updateBanner
+            }
+
             // Refresh rate
             VStack(spacing: 6) {
                 HStack {
@@ -107,14 +125,30 @@ struct PopoverView: View {
                     Text("Refresh rate")
                         .font(.caption)
                     Spacer()
-                    Text(String(format: "%.1fs", settings.samplingInterval))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .monospacedDigit()
+                    if metricsCollector.isLowPowerMode {
+                        Text(String(format: "%.1fs", metricsCollector.effectiveSamplingInterval))
+                            .font(.caption)
+                            .foregroundColor(.green)
+                            .monospacedDigit()
+                        Image(systemName: "leaf.fill")
+                            .font(.caption2)
+                            .foregroundColor(.green)
+                    } else {
+                        Text(String(format: "%.1fs", settings.samplingInterval))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .monospacedDigit()
+                    }
                 }
 
                 Slider(value: $settings.samplingInterval, in: 0.5...5.0, step: 0.5)
                     .onChange(of: settings.samplingInterval) { _ in onSettingsChanged() }
+
+                if metricsCollector.isLowPowerMode {
+                    Text("Reduced for Low Power Mode")
+                        .font(.caption2)
+                        .foregroundColor(.green)
+                }
             }
             .padding(12)
             .background(Color(NSColor.controlBackgroundColor))
@@ -186,6 +220,69 @@ struct PopoverView: View {
             }
         }
         .padding(.top, 4)
+    }
+
+    // MARK: - Update Banner
+
+    private var updateBanner: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Image(systemName: "arrow.down.circle.fill")
+                    .foregroundColor(.blue)
+                    .frame(width: 16)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Update Available: v\(updateChecker.latestVersion ?? "")")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Text("Run: brew upgrade silimon")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
+                }
+                Spacer()
+            }
+
+            HStack(spacing: 8) {
+                Button(action: {
+                    // Copy command to clipboard
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString("brew upgrade silimon", forType: .string)
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "doc.on.doc")
+                            .font(.caption)
+                        Text("Copy")
+                            .font(.caption)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(.bordered)
+
+                if let url = updateChecker.releaseURL {
+                    Button(action: {
+                        NSWorkspace.shared.open(url)
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "doc.text")
+                                .font(.caption)
+                            Text("Release Notes")
+                                .font(.caption)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+        }
+        .padding(12)
+        .background(Color.blue.opacity(0.1))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+        )
     }
 
     // MARK: - Thermal Warning

@@ -15,6 +15,7 @@ struct MetricRowView: View {
         case .memory: return .purple
         case .cpu: return .blue
         case .gpu: return .green
+        case .battery: return .green
         }
     }
 
@@ -59,6 +60,8 @@ struct MetricRowView: View {
             cpuStats
         case .gpu:
             gpuStats
+        case .battery:
+            batteryStats
         }
     }
 
@@ -80,13 +83,18 @@ struct MetricRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 Text(String(format: "CPU %.1f", metrics.cpuPower))
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
                 Text(String(format: "GPU %.1f", metrics.gpuPower))
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
+                if metrics.anePower > 0.01 {
+                    Text(String(format: "ANE %.1f", metrics.anePower))
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                }
             }
         }
     }
@@ -100,6 +108,10 @@ struct MetricRowView: View {
                 Text("Memory")
                     .font(.caption2)
                     .foregroundColor(.secondary)
+                // Memory pressure indicator
+                Circle()
+                    .fill(memoryPressureColor)
+                    .frame(width: 6, height: 6)
             }
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.memoryUsagePercent))
@@ -109,9 +121,24 @@ struct MetricRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            Text(String(format: "%.1f / %.0f GB", metrics.memoryUsedGB, metrics.memoryTotalGB))
-                .font(.system(size: 9))
-                .foregroundColor(.secondary)
+            HStack(spacing: 4) {
+                Text(String(format: "%.1f / %.0f GB", metrics.memoryUsedGB, metrics.memoryTotalGB))
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                if metrics.swapUsedGB > 0.01 {
+                    Text(String(format: "Swap %.1f", metrics.swapUsedGB))
+                        .font(.system(size: 9))
+                        .foregroundColor(.orange)
+                }
+            }
+        }
+    }
+
+    private var memoryPressureColor: Color {
+        switch metrics.memoryPressure {
+        case .nominal: return .green
+        case .warn: return .yellow
+        case .critical: return .red
         }
     }
 
@@ -133,13 +160,27 @@ struct MetricRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            HStack(spacing: 6) {
-                Text(String(format: "E %.0f%%", metrics.eCoreUsage))
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
-                Text(String(format: "P %.0f%%", metrics.pCoreUsage))
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                    Text(String(format: "E %.0f%%", metrics.eCoreUsage))
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                    if metrics.eCoreFrequencyMHz > 0 {
+                        Text(String(format: "%.0fMHz", metrics.eCoreFrequencyMHz))
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary.opacity(0.7))
+                    }
+                }
+                HStack(spacing: 4) {
+                    Text(String(format: "P %.0f%%", metrics.pCoreUsage))
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                    if metrics.pCoreFrequencyMHz > 0 {
+                        Text(String(format: "%.0fMHz", metrics.pCoreFrequencyMHz))
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary.opacity(0.7))
+                    }
+                }
             }
         }
     }
@@ -170,6 +211,75 @@ struct MetricRowView: View {
                 Text(" ")
                     .font(.system(size: 9))
             }
+        }
+    }
+
+    private var batteryStats: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                Image(systemName: batteryIcon)
+                    .font(.system(size: 10))
+                    .foregroundColor(batteryColor)
+                Text("Battery")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                if metrics.batteryIsCharging {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 8))
+                        .foregroundColor(.yellow)
+                }
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(String(format: "%.0f", metrics.batteryLevel))
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                Text("%")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            if let timeRemaining = metrics.batteryTimeRemaining {
+                let hours = timeRemaining / 60
+                let minutes = timeRemaining % 60
+                Text(metrics.batteryIsCharging
+                     ? String(format: "%d:%02d to full", hours, minutes)
+                     : String(format: "%d:%02d remaining", hours, minutes))
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+            } else {
+                Text(metrics.batteryIsCharging ? "Charging..." : "Calculating...")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+
+    private var batteryIcon: String {
+        let level = metrics.batteryLevel
+        if metrics.batteryIsCharging {
+            return "battery.100.bolt"
+        } else if level > 75 {
+            return "battery.100"
+        } else if level > 50 {
+            return "battery.75"
+        } else if level > 25 {
+            return "battery.50"
+        } else if level > 10 {
+            return "battery.25"
+        } else {
+            return "battery.0"
+        }
+    }
+
+    private var batteryColor: Color {
+        let level = metrics.batteryLevel
+        if metrics.batteryIsCharging {
+            return .green
+        } else if level > 20 {
+            return .green
+        } else if level > 10 {
+            return .yellow
+        } else {
+            return .red
         }
     }
 
@@ -221,13 +331,14 @@ struct MetricRowView: View {
         case .memory: return sample.memoryUsagePercent
         case .cpu: return sample.combinedCpuUsage
         case .gpu: return sample.gpuUsage
+        case .battery: return sample.batteryLevel
         }
     }
 
     private var chartDomain: ClosedRange<Double> {
         switch metric {
         case .power: return 0...50
-        case .memory, .cpu, .gpu: return 0...100
+        case .memory, .cpu, .gpu, .battery: return 0...100
         }
     }
 

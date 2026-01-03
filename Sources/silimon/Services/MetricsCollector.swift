@@ -11,6 +11,7 @@ class MetricsCollector: ObservableObject {
 
     private var timer: Timer?
     private let memoryStats = MemoryStats()
+    private let batteryStats = BatteryStats()
     private let powerMetricsParser = PowerMetricsParser()
     private var powerMetricsProcess: Process?
     private var tempFile: URL?
@@ -105,6 +106,14 @@ class MetricsCollector: ObservableObject {
             metrics.memoryTotalGB = memStats.totalGB
             metrics.memoryPressure = memStats.pressure
             metrics.swapUsedGB = memStats.swapGB
+        }
+
+        // Collect battery stats (no sudo needed) - only if battery module is enabled
+        if settings.batteryModuleEnabled {
+            let batStats = batteryStats.collect()
+            metrics.batteryLevel = batStats.level
+            metrics.batteryIsCharging = batStats.isCharging
+            metrics.batteryTimeRemaining = batStats.timeRemaining
         }
 
         // Read powermetrics data if available and any relevant module is enabled
