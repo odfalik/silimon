@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.1](https://github.com/odfalik/silimon/compare/v0.7.0...v0.7.1) (2026-01-03)
+
+
+### Bug Fixes
+
+* correct release-please extra-files config for version annotation ([a8cfa9f](https://github.com/odfalik/silimon/commit/a8cfa9f67f0848a2c9cc02dad6a78d83b3441a26))
+* explicitly reference release-please config files in workflow ([b20b0b1](https://github.com/odfalik/silimon/commit/b20b0b1e123bc6e0c4c5a954e42ff7fac30c7a20))
+
 ## [0.7.0](https://github.com/odfalik/silimon/compare/v0.6.0...v0.7.0) (2026-01-03)
 
 
