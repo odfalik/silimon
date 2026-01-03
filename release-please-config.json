@@ -5,14 +5,12 @@
   "bump-patch-for-minor-pre-major": true,
   "packages": {
     ".": {
-      "package-name": "silimon",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": false,
       "extra-files": [
         {
           "type": "generic",
-          "path": "Sources/silimon/main.swift",
-          "glob": false
+          "path": "Sources/silimon/main.swift"
         }
       ]
     }

@@ -11,6 +11,18 @@ This project uses fully automated releases via release-please and GitHub Actions
    - `Sources/silimon/main.swift` - via `x-release-please-version` annotation
    - `CHANGELOG.md` - generated from conventional commits
 
+### Version Annotation Format
+
+The version in `main.swift` uses the generic updater annotation:
+```swift
+let version = "X.Y.Z" // x-release-please-version
+```
+
+Requirements for the annotation to work:
+- Version must be full semver format (X.Y.Z with all 3 components)
+- The `// x-release-please-version` comment must be on the same line
+- The version in the file must match the manifest before release-please runs
+
 ### Release Flow
 
 ```
