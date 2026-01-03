@@ -9,6 +9,7 @@ class StatusBarView: NSView {
     private let memoryColor = NSColor.systemPurple
     private let cpuColor = NSColor.systemBlue
     private let gpuColor = NSColor.systemGreen
+    private let batteryColor = NSColor.systemGreen
 
     private let menuBarHeight: CGFloat = 22
     private let pillHeight: CGFloat = 16
@@ -113,6 +114,12 @@ class StatusBarView: NSView {
             let hasData = metrics.gpuFrequencyMHz > 0 || metrics.gpuUsage > 0
             let fillPercent = hasData ? metrics.gpuUsage / 100.0 : 0
             return (hasData, metrics.gpuUsage, fillPercent, "%", "cpu", gpuColor)
+
+        case .battery:
+            let hasData = metrics.batteryLevel > 0
+            let fillPercent = hasData ? metrics.batteryLevel / 100.0 : 0
+            let icon = metrics.batteryIsCharging ? "battery.100.bolt" : "battery.100"
+            return (hasData, metrics.batteryLevel, fillPercent, "%", icon, batteryColor)
         }
     }
 

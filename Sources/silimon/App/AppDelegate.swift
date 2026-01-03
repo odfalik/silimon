@@ -9,6 +9,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var eventMonitor: Any?
     private var statusBarTimer: Timer?
     private let settings = Settings.shared
+    private let updateChecker = UpdateChecker.shared
     private var cancellables = Set<AnyCancellable>()
     private var statusBarView: StatusBarView!
 
@@ -33,12 +34,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Create the popover
         popover = NSPopover()
-        popover.contentSize = NSSize(width: 320, height: 420)
+        popover.contentSize = NSSize(width: 320, height: 400)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
             rootView: PopoverView(
                 metricsCollector: metricsCollector,
                 settings: settings,
+                updateChecker: updateChecker,
                 onSettingsChanged: { [weak self] in
                     self?.handleSettingsChanged()
                 }
@@ -47,6 +49,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Start collecting metrics
         metricsCollector.start()
+
+        // Start checking for updates
+        updateChecker.startPeriodicChecks()
 
         // Update status bar periodically
         startStatusBarTimer()
@@ -68,6 +73,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .merge(with: settings.$showMemoryInStatusBar)
             .merge(with: settings.$showCPUInStatusBar)
             .merge(with: settings.$showGPUInStatusBar)
+            .merge(with: settings.$showBatteryInStatusBar)
             .sink { [weak self] _ in
                 self?.updateStatusBar()
             }
@@ -91,6 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         metricsCollector.stop()
+        updateChecker.stopPeriodicChecks()
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
         }

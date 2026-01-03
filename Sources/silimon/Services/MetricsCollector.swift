@@ -7,17 +7,54 @@ class MetricsCollector: ObservableObject {
     @Published private(set) var currentMetrics = Metrics.empty
     @Published private(set) var isCollecting = false
     @Published private(set) var error: String?
+    @Published private(set) var isLowPowerMode = false
 
     private var timer: Timer?
     private let memoryStats = MemoryStats()
+    private let batteryStats = BatteryStats()
     private let powerMetricsParser = PowerMetricsParser()
     private var powerMetricsProcess: Process?
     private var tempFile: URL?
+    private var powerStateObserver: NSObjectProtocol?
 
     private let settings: Settings
 
+    /// Multiplier for sampling interval when in low power mode
+    private let lowPowerMultiplier: Double = 2.0
+
     init(settings: Settings = .shared) {
         self.settings = settings
+        setupPowerStateObserver()
+        updateLowPowerState()
+    }
+
+    private func setupPowerStateObserver() {
+        powerStateObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name.NSProcessInfoPowerStateDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handlePowerStateChange()
+        }
+    }
+
+    private func updateLowPowerState() {
+        isLowPowerMode = ProcessInfo.processInfo.isLowPowerModeEnabled
+    }
+
+    private func handlePowerStateChange() {
+        let wasLowPower = isLowPowerMode
+        updateLowPowerState()
+
+        // Restart timer with new interval if power state changed
+        if wasLowPower != isLowPowerMode && isCollecting {
+            startTimer()
+        }
+    }
+
+    /// Effective sampling interval, accounting for low power mode
+    var effectiveSamplingInterval: TimeInterval {
+        isLowPowerMode ? settings.samplingInterval * lowPowerMultiplier : settings.samplingInterval
     }
 
     func start() {
@@ -52,10 +89,11 @@ class MetricsCollector: ObservableObject {
 
     private func startTimer() {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: settings.samplingInterval, repeats: true) { [weak self] _ in
+        let interval = effectiveSamplingInterval
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.collectSample()
         }
-        timer?.tolerance = settings.samplingInterval * 0.1
+        timer?.tolerance = interval * 0.1
     }
 
     private func collectSample() {
@@ -68,6 +106,14 @@ class MetricsCollector: ObservableObject {
             metrics.memoryTotalGB = memStats.totalGB
             metrics.memoryPressure = memStats.pressure
             metrics.swapUsedGB = memStats.swapGB
+        }
+
+        // Collect battery stats (no sudo needed) - only if battery module is enabled
+        if settings.batteryModuleEnabled {
+            let batStats = batteryStats.collect()
+            metrics.batteryLevel = batStats.level
+            metrics.batteryIsCharging = batStats.isCharging
+            metrics.batteryTimeRemaining = batStats.timeRemaining
         }
 
         // Read powermetrics data if available and any relevant module is enabled
@@ -152,5 +198,8 @@ class MetricsCollector: ObservableObject {
 
     deinit {
         stop()
+        if let observer = powerStateObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 }

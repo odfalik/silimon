@@ -4,9 +4,10 @@ import Combine
 /// Metric types that can be displayed
 enum MetricType: String, CaseIterable, Codable, Identifiable {
     case power
-    case memory
     case cpu
     case gpu
+    case memory
+    case battery
 
     var id: String { rawValue }
 
@@ -16,6 +17,7 @@ enum MetricType: String, CaseIterable, Codable, Identifiable {
         case .memory: return "Memory"
         case .cpu: return "CPU"
         case .gpu: return "GPU"
+        case .battery: return "Battery"
         }
     }
 
@@ -25,6 +27,7 @@ enum MetricType: String, CaseIterable, Codable, Identifiable {
         case .memory: return "memorychip"
         case .cpu: return "cpu.fill"
         case .gpu: return "cpu"
+        case .battery: return "battery.100"
         }
     }
 
@@ -34,6 +37,7 @@ enum MetricType: String, CaseIterable, Codable, Identifiable {
         case .memory: return "purple"
         case .cpu: return "blue"
         case .gpu: return "green"
+        case .battery: return "green"
         }
     }
 }
@@ -62,6 +66,10 @@ class Settings: ObservableObject {
         didSet { defaults.set(showGPUInStatusBar, forKey: Keys.showGPUInStatusBar) }
     }
 
+    @Published var showBatteryInStatusBar: Bool {
+        didSet { defaults.set(showBatteryInStatusBar, forKey: Keys.showBatteryInStatusBar) }
+    }
+
     // MARK: - Module Enable/Disable
 
     @Published var gpuModuleEnabled: Bool {
@@ -78,6 +86,10 @@ class Settings: ObservableObject {
 
     @Published var powerModuleEnabled: Bool {
         didSet { defaults.set(powerModuleEnabled, forKey: Keys.powerModuleEnabled) }
+    }
+
+    @Published var batteryModuleEnabled: Bool {
+        didSet { defaults.set(batteryModuleEnabled, forKey: Keys.batteryModuleEnabled) }
     }
 
     // MARK: - Sampling Settings
@@ -114,6 +126,7 @@ class Settings: ObservableObject {
         case .memory: return showMemoryInStatusBar
         case .cpu: return showCPUInStatusBar
         case .gpu: return showGPUInStatusBar
+        case .battery: return showBatteryInStatusBar
         }
     }
 
@@ -124,6 +137,7 @@ class Settings: ObservableObject {
         case .memory: showMemoryInStatusBar = value
         case .cpu: showCPUInStatusBar = value
         case .gpu: showGPUInStatusBar = value
+        case .battery: showBatteryInStatusBar = value
         }
     }
 
@@ -134,6 +148,7 @@ class Settings: ObservableObject {
         case .memory: return memoryModuleEnabled
         case .cpu: return cpuModuleEnabled
         case .gpu: return gpuModuleEnabled
+        case .battery: return batteryModuleEnabled
         }
     }
 
@@ -144,6 +159,7 @@ class Settings: ObservableObject {
         case .memory: memoryModuleEnabled = value
         case .cpu: cpuModuleEnabled = value
         case .gpu: gpuModuleEnabled = value
+        case .battery: batteryModuleEnabled = value
         }
     }
 
@@ -159,10 +175,12 @@ class Settings: ObservableObject {
         static let showMemoryInStatusBar = "showMemoryInStatusBar"
         static let showCPUInStatusBar = "showCPUInStatusBar"
         static let showGPUInStatusBar = "showGPUInStatusBar"
+        static let showBatteryInStatusBar = "showBatteryInStatusBar"
         static let gpuModuleEnabled = "gpuModuleEnabled"
         static let cpuModuleEnabled = "cpuModuleEnabled"
         static let memoryModuleEnabled = "memoryModuleEnabled"
         static let powerModuleEnabled = "powerModuleEnabled"
+        static let batteryModuleEnabled = "batteryModuleEnabled"
         static let samplingInterval = "samplingInterval"
         static let launchAtLogin = "launchAtLogin"
         static let metricOrder = "metricOrder"
@@ -177,10 +195,12 @@ class Settings: ObservableObject {
             Keys.showMemoryInStatusBar: false,
             Keys.showCPUInStatusBar: false,
             Keys.showGPUInStatusBar: false,
+            Keys.showBatteryInStatusBar: false,
             Keys.gpuModuleEnabled: true,
             Keys.cpuModuleEnabled: true,
             Keys.memoryModuleEnabled: true,
             Keys.powerModuleEnabled: true,
+            Keys.batteryModuleEnabled: true,
             Keys.samplingInterval: 1.0,
             Keys.launchAtLogin: false
         ])
@@ -190,10 +210,12 @@ class Settings: ObservableObject {
         showMemoryInStatusBar = defaults.bool(forKey: Keys.showMemoryInStatusBar)
         showCPUInStatusBar = defaults.bool(forKey: Keys.showCPUInStatusBar)
         showGPUInStatusBar = defaults.bool(forKey: Keys.showGPUInStatusBar)
+        showBatteryInStatusBar = defaults.bool(forKey: Keys.showBatteryInStatusBar)
         gpuModuleEnabled = defaults.bool(forKey: Keys.gpuModuleEnabled)
         cpuModuleEnabled = defaults.bool(forKey: Keys.cpuModuleEnabled)
         memoryModuleEnabled = defaults.bool(forKey: Keys.memoryModuleEnabled)
         powerModuleEnabled = defaults.bool(forKey: Keys.powerModuleEnabled)
+        batteryModuleEnabled = defaults.bool(forKey: Keys.batteryModuleEnabled)
         samplingInterval = defaults.double(forKey: Keys.samplingInterval)
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
 

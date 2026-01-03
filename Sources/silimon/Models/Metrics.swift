@@ -27,6 +27,11 @@ struct Metrics: Identifiable {
     var packagePower: Double = 0      // Total SoC power in Watts
     var anePower: Double = 0          // Neural Engine power in Watts
 
+    // Battery metrics
+    var batteryLevel: Double = 0      // 0-100%
+    var batteryIsCharging: Bool = false
+    var batteryTimeRemaining: Int? = nil  // Minutes remaining (nil if calculating or on AC)
+
     // Thermal
     var thermalPressure: ThermalPressure = .nominal
 
