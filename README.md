@@ -10,16 +10,7 @@ A lightweight macOS menu bar app for monitoring Apple Silicon performance metric
 
 ## Why Silimon?
 
-Silimon uses Apple's IOReport API to show metrics that other apps **cannot display** on Apple Silicon - no sudo required:
-
-| Metric | Others | Silimon |
-|--------|--------|---------|
-| CPU/GPU Usage | ✅ | ✅ |
-| Memory Usage | ✅ | ✅ |
-| **CPU Frequency (E/P cores)** | ❌ | ✅ |
-| **Per-component Power (W)** | ❌ | ✅ |
-| **ANE Power** | ❌ | ✅ |
-| **Package Power** | ❌ | ✅ |
+A simple, lightweight menu bar app that shows Apple Silicon metrics at a glance - no sudo, no bloat, no subscription.
 
 ## Features
 
