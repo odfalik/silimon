@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-let version = "0.3.0"
+let version = "0.4.0"
 
 // Handle command line arguments
 let args = CommandLine.arguments
@@ -25,6 +25,7 @@ if args.contains("--help") || args.contains("-h") {
       - E-core and P-core frequencies
       - Memory usage and pressure
       - Package and ANE power
+      - Battery level, charging state, and time remaining
 
     Note: Requires sudo access for powermetrics. Run 'sudo Scripts/setup-sudo.sh'
     to enable passwordless operation.
