@@ -54,8 +54,12 @@ class UpdateChecker: ObservableObject {
             DispatchQueue.main.async {
                 self?.isChecking = false
 
+                // Silently handle network errors (offline, timeout, etc.)
+                if error != nil {
+                    return
+                }
+
                 guard let data = data,
-                      error == nil,
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let tagName = json["tag_name"] as? String,
                       let htmlURL = json["html_url"] as? String else {
