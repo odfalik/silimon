@@ -56,7 +56,7 @@ final class ParsingTests: XCTestCase {
         let usedGB = usedBytes / 1_073_741_824
 
         // 350000 pages * 16384 bytes = 5,734,400,000 bytes = ~5.34 GB
-        XCTAssertEqual(usedGB, 5.34027..., accuracy: 0.001)
+        XCTAssertEqual(usedGB, 5.34027, accuracy: 0.001)
     }
 
     // MARK: - Swap Usage Parsing Tests
@@ -64,7 +64,7 @@ final class ParsingTests: XCTestCase {
     func testParseSwapUsage() {
         let swapOutput = "vm.swapusage: total = 2048.00M  used = 256.50M  free = 1791.50M"
         let usedGB = parseSwapUsage(swapOutput)
-        XCTAssertEqual(usedGB, 0.2505..., accuracy: 0.001)
+        XCTAssertEqual(usedGB, 0.2505, accuracy: 0.001)
     }
 
     func testParseSwapUsageZero() {
