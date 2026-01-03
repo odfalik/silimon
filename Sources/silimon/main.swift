@@ -28,9 +28,6 @@ if args.contains("--help") || args.contains("-h") {
       - Package and ANE power
       - Battery level, charging state, and time remaining
 
-    Note: Requires sudo access for powermetrics. Run 'sudo Scripts/setup-sudo.sh'
-    to enable passwordless operation.
-
     For more information: https://github.com/odfalik/silimon
     """)
     exit(0)
@@ -56,14 +53,18 @@ if !args.contains("--foreground") {
 
     do {
         try process.run()
-        // Detach child from our process group so Ctrl+C won't kill it
-        let pid = process.processIdentifier
-        setpgid(pid, pid)
-        exit(0)  // Parent exits, child continues in background
+        exit(0)  // Parent exits immediately, child continues in background
     } catch {
         fputs("Failed to launch background process: \(error)\n", stderr)
         exit(1)
     }
+}
+
+// When running as the background process, create a new session to fully
+// detach from the controlling terminal. This prevents Ctrl+C in the
+// original terminal from killing us.
+if args.contains("--foreground") {
+    _ = setsid()
 }
 
 let app = NSApplication.shared

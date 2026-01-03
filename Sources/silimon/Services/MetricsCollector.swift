@@ -12,9 +12,7 @@ class MetricsCollector: ObservableObject {
     private var timer: Timer?
     private let memoryStats = MemoryStats()
     private let batteryStats = BatteryStats()
-    private let powerMetricsParser = PowerMetricsParser()
-    private var powerMetricsProcess: Process?
-    private var tempFile: URL?
+    private let ioReportService: IOReportService
     private var powerStateObserver: NSObjectProtocol?
 
     private let settings: Settings
@@ -24,6 +22,8 @@ class MetricsCollector: ObservableObject {
 
     init(settings: Settings = .shared) {
         self.settings = settings
+        // Use shorter sampling duration for IOReport (100ms is enough for accurate readings)
+        self.ioReportService = IOReportService(samplingDurationMs: 100)
         setupPowerStateObserver()
         updateLowPowerState()
     }
@@ -62,9 +62,13 @@ class MetricsCollector: ObservableObject {
         isCollecting = true
         error = nil
 
-        // Start powermetrics process if needed
+        // Initialize IOReport if needed for power/CPU/GPU metrics
         if settings.needsPowerMetrics {
-            startPowerMetrics()
+            if !ioReportService.initialize() {
+                DispatchQueue.main.async {
+                    self.error = "Failed to initialize IOReport. Power metrics may not be available."
+                }
+            }
         }
 
         // Start polling timer with configured interval
@@ -78,7 +82,7 @@ class MetricsCollector: ObservableObject {
         isCollecting = false
         timer?.invalidate()
         timer = nil
-        stopPowerMetrics()
+        ioReportService.cleanup()
     }
 
     /// Called when settings change - restarts collection with new settings
@@ -99,7 +103,7 @@ class MetricsCollector: ObservableObject {
     private func collectSample() {
         var metrics = Metrics(timestamp: Date())
 
-        // Collect memory stats (no sudo needed) - only if memory module is enabled
+        // Collect memory stats - only if memory module is enabled
         if settings.memoryModuleEnabled {
             let memStats = memoryStats.collect()
             metrics.memoryUsedGB = memStats.usedGB
@@ -108,7 +112,7 @@ class MetricsCollector: ObservableObject {
             metrics.swapUsedGB = memStats.swapGB
         }
 
-        // Collect battery stats (no sudo needed) - only if battery module is enabled
+        // Collect battery stats - only if battery module is enabled
         if settings.batteryModuleEnabled {
             let batStats = batteryStats.collect()
             metrics.batteryLevel = batStats.level
@@ -116,27 +120,25 @@ class MetricsCollector: ObservableObject {
             metrics.batteryTimeRemaining = batStats.timeRemaining
         }
 
-        // Read powermetrics data if available and any relevant module is enabled
-        if settings.needsPowerMetrics,
-           let tempFile = tempFile,
-           let powerData = powerMetricsParser.parse(from: tempFile) {
+        // Collect power/CPU/GPU metrics via IOReport
+        if settings.needsPowerMetrics, let sample = ioReportService.sample() {
             if settings.gpuModuleEnabled {
-                metrics.gpuUsage = powerData.gpuUsage
-                metrics.gpuFrequencyMHz = powerData.gpuFrequencyMHz
-                metrics.gpuPower = powerData.gpuPower
+                metrics.gpuUsage = sample.gpuUsage
+                metrics.gpuFrequencyMHz = sample.gpuFreqMHz
+                metrics.gpuPower = sample.gpuPower
             }
             if settings.cpuModuleEnabled {
-                metrics.eCoreUsage = powerData.eCoreUsage
-                metrics.pCoreUsage = powerData.pCoreUsage
-                metrics.eCoreFrequencyMHz = powerData.eCoreFrequencyMHz
-                metrics.pCoreFrequencyMHz = powerData.pCoreFrequencyMHz
-                metrics.cpuPower = powerData.cpuPower
+                metrics.eCoreUsage = sample.eCoreUsage
+                metrics.pCoreUsage = sample.pCoreUsage
+                metrics.eCoreFrequencyMHz = sample.eCoreFreqMHz
+                metrics.pCoreFrequencyMHz = sample.pCoreFreqMHz
+                metrics.cpuPower = sample.cpuPower
             }
             if settings.powerModuleEnabled {
-                metrics.packagePower = powerData.packagePower
-                metrics.anePower = powerData.anePower
+                metrics.packagePower = sample.packagePower
+                metrics.anePower = sample.anePower
             }
-            metrics.thermalPressure = powerData.thermalPressure
+            metrics.thermalPressure = sample.thermalPressure
         }
 
         // Update published properties on main thread
@@ -144,56 +146,6 @@ class MetricsCollector: ObservableObject {
             self.currentMetrics = metrics
             self.history.add(metrics)
         }
-    }
-
-    // MARK: - PowerMetrics Process Management
-
-    private func startPowerMetrics() {
-        // Create temp file for output
-        let tempDir = FileManager.default.temporaryDirectory
-        tempFile = tempDir.appendingPathComponent("silimon_metrics_\(ProcessInfo.processInfo.processIdentifier).plist")
-
-        guard let tempFile = tempFile else { return }
-
-        // Remove any existing temp file
-        try? FileManager.default.removeItem(at: tempFile)
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
-        process.arguments = [
-            "nice", "-n", "10",
-            "/usr/bin/powermetrics",
-            "--samplers", "cpu_power,gpu_power,thermal",
-            "-f", "plist",
-            "-i", "1000",  // 1 second interval
-            "-o", tempFile.path
-        ]
-
-        // Suppress output
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = FileHandle.nullDevice
-
-        do {
-            try process.run()
-            powerMetricsProcess = process
-        } catch {
-            DispatchQueue.main.async {
-                self.error = "Failed to start powermetrics: \(error.localizedDescription). Run 'sudo silimon' or set up passwordless sudo."
-            }
-        }
-    }
-
-    private func stopPowerMetrics() {
-        if let process = powerMetricsProcess, process.isRunning {
-            process.terminate()
-        }
-        powerMetricsProcess = nil
-
-        // Clean up temp file
-        if let tempFile = tempFile {
-            try? FileManager.default.removeItem(at: tempFile)
-        }
-        tempFile = nil
     }
 
     deinit {

@@ -10,9 +10,26 @@ let package = Package(
         .executable(name: "silimon", targets: ["silimon"])
     ],
     targets: [
+        .target(
+            name: "IOReportLib",
+            path: "Sources/IOReportLib",
+            publicHeadersPath: "include",
+            cSettings: [
+                .unsafeFlags(["-fmodules", "-fcxx-modules"])
+            ],
+            linkerSettings: [
+                .linkedFramework("IOKit"),
+                .linkedFramework("Foundation"),
+                .linkedLibrary("IOReport")
+            ]
+        ),
         .executableTarget(
             name: "silimon",
-            path: "Sources/silimon"
+            dependencies: ["IOReportLib"],
+            path: "Sources/silimon",
+            linkerSettings: [
+                .linkedFramework("IOKit")
+            ]
         )
     ]
 )

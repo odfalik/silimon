@@ -117,6 +117,27 @@ class Settings: ObservableObject {
         }
     }
 
+    // MARK: - Star Repo Prompt
+
+    /// Date when the app was first launched (nil if never set)
+    private(set) var firstLaunchDate: Date? {
+        didSet {
+            if let date = firstLaunchDate {
+                defaults.set(date, forKey: Keys.firstLaunchDate)
+            }
+        }
+    }
+
+    /// Whether we've already asked the user to star the repo
+    @Published var hasAskedToStarRepo: Bool {
+        didSet { defaults.set(hasAskedToStarRepo, forKey: Keys.hasAskedToStarRepo) }
+    }
+
+    /// Number of times the app has been launched
+    private(set) var launchCount: Int {
+        didSet { defaults.set(launchCount, forKey: Keys.launchCount) }
+    }
+
     // MARK: - Computed Properties
 
     /// Get whether a metric is shown in the status bar
@@ -163,9 +184,44 @@ class Settings: ObservableObject {
         }
     }
 
-    /// Returns true if powermetrics is needed (any module that requires it is enabled)
+    /// Returns true if IOReport sampling is needed (any power/CPU/GPU module is enabled)
     var needsPowerMetrics: Bool {
         gpuModuleEnabled || cpuModuleEnabled || powerModuleEnabled
+    }
+
+    /// Returns true if we should show the "star the repo" prompt
+    var shouldShowStarPrompt: Bool {
+        // Don't show if we've already asked
+        guard !hasAskedToStarRepo else { return false }
+
+        // Don't show if app hasn't been launched enough times (3+ launches)
+        guard launchCount >= 3 else { return false }
+
+        // Don't show if app hasn't been running long enough (3+ days)
+        guard let firstLaunch = firstLaunchDate else { return false }
+        let daysSinceFirstLaunch = Calendar.current.dateComponents([.day], from: firstLaunch, to: Date()).day ?? 0
+        guard daysSinceFirstLaunch >= 3 else { return false }
+
+        // Only show if git appears to be configured on the system
+        return hasGitConfigured
+    }
+
+    /// Check if git appears to be configured on the system
+    private var hasGitConfigured: Bool {
+        // Check for ~/.gitconfig
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let gitconfig = home.appendingPathComponent(".gitconfig")
+        if FileManager.default.fileExists(atPath: gitconfig.path) {
+            return true
+        }
+
+        // Check for ~/.config/git/config
+        let gitConfigAlt = home.appendingPathComponent(".config/git/config")
+        if FileManager.default.fileExists(atPath: gitConfigAlt.path) {
+            return true
+        }
+
+        return false
     }
 
     // MARK: - Keys
@@ -184,6 +240,9 @@ class Settings: ObservableObject {
         static let samplingInterval = "samplingInterval"
         static let launchAtLogin = "launchAtLogin"
         static let metricOrder = "metricOrder"
+        static let firstLaunchDate = "firstLaunchDate"
+        static let hasAskedToStarRepo = "hasAskedToStarRepo"
+        static let launchCount = "launchCount"
     }
 
     // MARK: - Initialization
@@ -218,6 +277,17 @@ class Settings: ObservableObject {
         batteryModuleEnabled = defaults.bool(forKey: Keys.batteryModuleEnabled)
         samplingInterval = defaults.double(forKey: Keys.samplingInterval)
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
+
+        // Load star repo prompt tracking
+        hasAskedToStarRepo = defaults.bool(forKey: Keys.hasAskedToStarRepo)
+        launchCount = defaults.integer(forKey: Keys.launchCount) + 1  // Increment on each launch
+        defaults.set(launchCount, forKey: Keys.launchCount)
+        if let savedDate = defaults.object(forKey: Keys.firstLaunchDate) as? Date {
+            firstLaunchDate = savedDate
+        } else {
+            // First launch - record the date
+            firstLaunchDate = Date()
+        }
 
         // Load metric order
         if let savedOrder = defaults.stringArray(forKey: Keys.metricOrder) {

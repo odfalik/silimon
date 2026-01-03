@@ -7,7 +7,7 @@ Thanks for your interest in contributing to Silimon! This document outlines how 
 ### Prerequisites
 
 - macOS 13.0 (Ventura) or later
-- Apple Silicon Mac (M1, M2, M3, etc.)
+- Apple Silicon Mac (M1, M2, M3, M4, etc.)
 - Xcode 14.0+ with Command Line Tools
 - Swift 5.9+
 
@@ -24,12 +24,7 @@ Thanks for your interest in contributing to Silimon! This document outlines how 
    make build
    ```
 
-3. **Set up passwordless powermetrics** (required for full functionality)
-   ```bash
-   sudo Scripts/setup-sudo.sh
-   ```
-
-4. **Run in development mode**
+3. **Run in development mode**
    ```bash
    make dev
    ```
@@ -48,26 +43,40 @@ Thanks for your interest in contributing to Silimon! This document outlines how 
 
 ```
 silimon/
-├── Sources/silimon/
-│   ├── App/
-│   │   └── AppDelegate.swift      # App lifecycle, status bar setup
-│   ├── Models/
-│   │   ├── Metrics.swift          # Data structures
-│   │   ├── MetricsHistory.swift   # Historical data buffer
-│   │   └── Settings.swift         # User preferences
-│   ├── Views/
-│   │   ├── PopoverView.swift      # Main popover UI
-│   │   ├── StatusBarView.swift    # Menu bar custom view
-│   │   ├── SettingsView.swift     # Settings panel
-│   │   └── *View.swift            # Metric cards (CPU, GPU, etc.)
-│   └── Services/
-│       ├── MetricsCollector.swift # Main data collection
-│       └── PowerMetricsParser.swift # powermetrics parsing
+├── Sources/
+│   ├── IOReportLib/              # C/Objective-C IOReport API wrapper
+│   │   ├── include/
+│   │   │   ├── IOReportLib.h     # Public API header
+│   │   │   └── module.modulemap  # Swift module map
+│   │   └── IOReportLib.m         # IOReport implementation
+│   └── silimon/
+│       ├── App/
+│       │   └── AppDelegate.swift # App lifecycle, status bar setup
+│       ├── Models/
+│       │   ├── Metrics.swift     # Data structures
+│       │   ├── MetricsHistory.swift # Historical data buffer
+│       │   └── Settings.swift    # User preferences
+│       ├── Views/
+│       │   ├── PopoverView.swift # Main popover UI
+│       │   ├── StatusBarView.swift # Menu bar custom view
+│       │   └── *View.swift       # Metric cards (CPU, GPU, etc.)
+│       └── Services/
+│           ├── MetricsCollector.swift # Main data collection
+│           └── IOReportService.swift  # Swift wrapper for IOReport
 ├── Scripts/
-│   ├── setup-sudo.sh              # Passwordless powermetrics setup
-│   └── uninstall.sh               # Cleanup script
-└── Package.swift                   # Swift package manifest
+│   └── uninstall.sh              # Cleanup script
+└── Package.swift                  # Swift package manifest
 ```
+
+## Architecture
+
+Silimon uses Apple's IOReport API for SoC metrics:
+
+- **IOReportLib** - C/Objective-C module that interfaces with the private IOReport framework
+- **IOReportService** - Swift wrapper providing a clean API for metrics collection
+- **MetricsCollector** - Orchestrates all data collection (power, memory, battery)
+
+No sudo is required because IOReport provides user-accessible diagnostics APIs.
 
 ## Making Changes
 
