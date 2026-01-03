@@ -112,6 +112,7 @@ struct MetricRowView: View {
                 Circle()
                     .fill(memoryPressureColor)
                     .frame(width: 6, height: 6)
+                    .help("Memory pressure: \(metrics.memoryPressure.rawValue)")
             }
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.memoryUsagePercent))
@@ -128,6 +129,7 @@ struct MetricRowView: View {
                 Text(String(format: "Swap %.1f GB", metrics.swapUsedGB))
                     .font(.system(size: 9))
                     .foregroundColor(.orange)
+                    .help("Virtual memory on disk when RAM is full")
             }
         }
     }
