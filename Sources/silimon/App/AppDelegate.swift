@@ -10,19 +10,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarTimer: Timer?
     private let settings = Settings.shared
     private var cancellables = Set<AnyCancellable>()
+    private var statusBarView: StatusBarView!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create the metrics collector with settings
         metricsCollector = MetricsCollector(settings: settings)
 
+        // Create the status bar view
+        statusBarView = StatusBarView(settings: settings)
+
         // Create the status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "chart.bar.fill", accessibilityDescription: "Silimon")
             button.action = #selector(togglePopover)
             button.target = self
-            updateStatusBarText()
+
+            // Add custom status bar view
+            button.addSubview(statusBarView)
+            updateStatusBar()
         }
 
         // Create the popover
@@ -63,7 +69,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .merge(with: settings.$showCPUInStatusBar)
             .merge(with: settings.$showGPUInStatusBar)
             .sink { [weak self] _ in
-                self?.updateStatusBarText()
+                self?.updateStatusBar()
             }
             .store(in: &cancellables)
     }
@@ -79,7 +85,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startStatusBarTimer() {
         statusBarTimer?.invalidate()
         statusBarTimer = Timer.scheduledTimer(withTimeInterval: settings.samplingInterval, repeats: true) { [weak self] _ in
-            self?.updateStatusBarText()
+            self?.updateStatusBar()
         }
     }
 
@@ -102,36 +108,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func updateStatusBarText() {
-        guard let button = statusItem.button else { return }
+    private func updateStatusBar() {
+        guard statusItem.button != nil else { return }
 
         let metrics = metricsCollector.currentMetrics
-        var parts: [String] = []
 
-        // Build status bar text based on enabled options
-        if settings.showPowerInStatusBar && metrics.packagePower > 0 {
-            parts.append(String(format: "%.1fW", metrics.packagePower))
-        }
+        // Update the custom status bar view
+        statusBarView.update(metrics: metrics)
 
-        if settings.showMemoryInStatusBar && metrics.memoryUsedGB > 0 {
-            parts.append(String(format: "%.1fGB", metrics.memoryUsedGB))
-        }
+        // Position the status bar view
+        statusBarView.frame.origin = .zero
 
-        if settings.showCPUInStatusBar {
-            let cpuUsage = max(metrics.eCoreUsage, metrics.pCoreUsage)
-            if cpuUsage > 0 {
-                parts.append(String(format: "CPU %.0f%%", cpuUsage))
-            }
-        }
-
-        if settings.showGPUInStatusBar && metrics.gpuUsage > 0 {
-            parts.append(String(format: "GPU %.0f%%", metrics.gpuUsage))
-        }
-
-        if parts.isEmpty {
-            button.title = ""
-        } else {
-            button.title = " " + parts.joined(separator: " | ")
-        }
+        // Update the status item width to fit the custom view
+        statusItem.length = statusBarView.frame.width
     }
 }
