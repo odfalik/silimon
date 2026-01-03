@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Build
+        run: swift build
+
+      - name: Run tests
+        run: swift test
+
+  lint:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check formatting (info only)
+        continue-on-error: true
+        run: |
+          if command -v swiftformat &> /dev/null; then
+            swiftformat --lint Sources Tests || echo "SwiftFormat suggestions above (non-blocking)"
+          else
+            echo "SwiftFormat not installed, skipping"
+          fi
