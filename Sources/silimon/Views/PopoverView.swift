@@ -16,6 +16,13 @@ struct PopoverView: View {
 
             Divider()
 
+            // Update banner at top when available
+            if updateChecker.updateAvailable {
+                updateBanner
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+            }
+
             // Metric rows
             ScrollView {
                 VStack(spacing: 8) {
@@ -111,11 +118,6 @@ struct PopoverView: View {
 
     private var settingsControls: some View {
         VStack(spacing: 12) {
-            // Update available banner
-            if updateChecker.updateAvailable {
-                updateBanner
-            }
-
             // Refresh rate
             VStack(spacing: 6) {
                 HStack {
@@ -234,10 +236,9 @@ struct PopoverView: View {
                     Text("Update Available: v\(updateChecker.latestVersion ?? "")")
                         .font(.caption)
                         .fontWeight(.medium)
-                    Text("Run: brew upgrade silimon")
+                    Text("Run `brew upgrade silimon` in your terminal")
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                        .textSelection(.enabled)
                 }
                 Spacer()
             }
