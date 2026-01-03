@@ -14,6 +14,7 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -21,49 +22,78 @@ jobs:
           release-type: simple
           package-name: silimon
 
-  update-homebrew:
+  build-and-upload:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: macos-latest
+    outputs:
+      sha256: ${{ steps.build.outputs.sha256 }}
     steps:
-      - name: Calculate SHA256
-        id: sha
-        run: |
-          VERSION="${{ needs.release-please.outputs.tag_name }}"
-          URL="https://github.com/odfalik/silimon/archive/refs/tags/${VERSION}.tar.gz"
-          SHA=$(curl -sL "$URL" | shasum -a 256 | cut -d' ' -f1)
-          echo "sha256=${SHA}" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
 
+      - name: Build release binary
+        id: build
+        run: |
+          VERSION="${{ needs.release-please.outputs.version }}"
+
+          # Build the release binary
+          swift build -c release --disable-sandbox
+
+          # Create release directory
+          mkdir -p silimon-release/Scripts
+          cp .build/release/silimon silimon-release/
+          cp Scripts/setup-sudo.sh silimon-release/Scripts/
+          cp Scripts/uninstall.sh silimon-release/Scripts/
+
+          # Create tarball
+          TARBALL="silimon-${VERSION}-arm64.tar.gz"
+          tar -czvf "$TARBALL" silimon-release
+
+          # Calculate SHA256
+          SHA256=$(shasum -a 256 "$TARBALL" | cut -d' ' -f1)
+          echo "sha256=${SHA256}" >> $GITHUB_OUTPUT
+          echo "tarball=${TARBALL}" >> $GITHUB_OUTPUT
+
+          echo "Built $TARBALL with SHA256: $SHA256"
+
+      - name: Upload binary to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload ${{ needs.release-please.outputs.tag_name }} ${{ steps.build.outputs.tarball }} --clobber
+
+  update-homebrew:
+    needs: [release-please, build-and-upload]
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Update Homebrew tap
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
+          VERSION="${{ needs.release-please.outputs.version }}"
+          TAG="${{ needs.release-please.outputs.tag_name }}"
+          SHA256="${{ needs.build-and-upload.outputs.sha256 }}"
+
           git clone https://x-access-token:${GH_TOKEN}@github.com/odfalik/homebrew-silimon.git
           cd homebrew-silimon
 
-          cat > Formula/silimon.rb << 'FORMULA'
+          cat > Formula/silimon.rb << EOF
           # Homebrew formula for Silimon
           # Auto-updated by GitHub Actions
 
           class Silimon < Formula
             desc "Apple Silicon performance monitor for your menu bar"
             homepage "https://github.com/odfalik/silimon"
-          FORMULA
-
-          echo "  url \"https://github.com/odfalik/silimon/archive/refs/tags/${{ steps.sha.outputs.version }}.tar.gz\"" >> Formula/silimon.rb
-          echo "  sha256 \"${{ steps.sha.outputs.sha256 }}\"" >> Formula/silimon.rb
-
-          cat >> Formula/silimon.rb << 'FORMULA'
+            url "https://github.com/odfalik/silimon/releases/download/${TAG}/silimon-${VERSION}-arm64.tar.gz"
+            sha256 "${SHA256}"
             license "MIT"
-            head "https://github.com/odfalik/silimon.git", branch: "main"
 
             depends_on :macos
-            depends_on xcode: ["14.0", :build]
+            depends_on arch: :arm64
 
             def install
-              system "swift", "build", "-c", "release", "--disable-sandbox"
-              bin.install ".build/release/silimon"
+              bin.install "silimon"
               (pkgshare/"scripts").install "Scripts/setup-sudo.sh"
               (pkgshare/"scripts").install "Scripts/uninstall.sh"
             end
@@ -76,7 +106,7 @@ jobs:
                   silimon
 
                 First run may require: sudo silimon
-                Or run: $(brew --prefix)/share/silimon/scripts/setup-sudo.sh
+                Or run: \$(brew --prefix)/share/silimon/scripts/setup-sudo.sh
               EOS
             end
 
@@ -84,10 +114,10 @@ jobs:
               assert_match "silimon", shell_output("#{bin}/silimon --help 2>&1", 0)
             end
           end
-          FORMULA
+          EOF
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/silimon.rb
-          git commit -m "Update silimon to ${{ steps.sha.outputs.version }}"
+          git commit -m "Update silimon to ${TAG} with pre-built binary"
           git push
