@@ -4,7 +4,7 @@ PREFIX ?= /usr/local
 BINARY = silimon
 BUILD_DIR = .build/release
 
-.PHONY: all build release install uninstall clean setup-sudo run
+.PHONY: all build release install uninstall clean setup-sudo run stop
 
 all: build
 
@@ -41,7 +41,11 @@ run: build
 dev: build
 	@echo "Starting silimon in development mode..."
 	@echo "Note: Run with 'sudo make dev' for full metrics access"
+	@echo "Use 'make stop' to stop silimon"
 	.build/debug/$(BINARY)
+
+stop:
+	@pkill -f "$(BINARY)" 2>/dev/null && echo "Stopped silimon" || echo "silimon is not running"
 
 # Show help
 help:
@@ -56,3 +60,4 @@ help:
 	@echo "  make setup-sudo  - Setup passwordless powermetrics"
 	@echo "  make run         - Build and run"
 	@echo "  make dev         - Build and run in dev mode"
+	@echo "  make stop        - Stop running silimon"
