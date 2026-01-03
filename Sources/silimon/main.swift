@@ -60,11 +60,15 @@ if !args.contains("--foreground") {
     }
 }
 
-// When running as the background process, create a new session to fully
-// detach from the controlling terminal. This prevents Ctrl+C in the
-// original terminal from killing us.
+// When running as the background process, fully detach from the terminal
 if args.contains("--foreground") {
+    // Create a new session (detach from controlling terminal)
     _ = setsid()
+
+    // Ignore terminal signals so Ctrl+C won't kill us
+    signal(SIGINT, SIG_IGN)
+    signal(SIGHUP, SIG_IGN)
+    signal(SIGTSTP, SIG_IGN)
 }
 
 let app = NSApplication.shared
