@@ -87,9 +87,17 @@ static void loadFrequencyTables(void) {
             CFRelease(pClusterData);
         }
 
-        // GPU frequencies
+        // GPU frequencies - try multiple property names for different chip variants
         CFDataRef gpuData = IORegistryEntryCreateCFProperty(entry,
             CFSTR("voltage-states9-sram"), kCFAllocatorDefault, 0);
+        if (!gpuData) {
+            gpuData = IORegistryEntryCreateCFProperty(entry,
+                CFSTR("voltage-states9"), kCFAllocatorDefault, 0);
+        }
+        if (!gpuData) {
+            gpuData = IORegistryEntryCreateCFProperty(entry,
+                CFSTR("voltage-states8-sram"), kCFAllocatorDefault, 0);
+        }
         if (gpuData) {
             size_t len = CFDataGetLength(gpuData);
             const uint8_t *bytes = CFDataGetBytePtr(gpuData);
@@ -136,19 +144,32 @@ static int calculateWeightedFreq(CFDictionaryRef channel, int *freqTable, int fr
     int stateCount = IOReportStateGetCount(channel);
     if (stateCount <= 0) return 0;
 
-    int64_t totalResidency = 0;
+    int64_t activeResidency = 0;
     int64_t weightedSum = 0;
 
     for (int i = 0; i < stateCount && i < freqCount; i++) {
         int64_t residency = IOReportStateGetResidency(channel, i);
-        if (residency > 0) {
-            totalResidency += residency;
+        if (residency <= 0) continue;
+
+        // Skip idle/off states - only count active P-states for frequency
+        CFStringRef stateName = IOReportStateGetNameForIndex(channel, i);
+        bool isIdle = (i == 0);  // State 0 is typically idle
+        if (stateName) {
+            if (CFStringFind(stateName, CFSTR("IDLE"), kCFCompareCaseInsensitive).location != kCFNotFound ||
+                CFStringFind(stateName, CFSTR("OFF"), kCFCompareCaseInsensitive).location != kCFNotFound ||
+                CFStringFind(stateName, CFSTR("DOWN"), kCFCompareCaseInsensitive).location != kCFNotFound) {
+                isIdle = true;
+            }
+        }
+
+        if (!isIdle && freqTable[i] > 0) {
+            activeResidency += residency;
             weightedSum += residency * freqTable[i];
         }
     }
 
-    if (totalResidency > 0) {
-        return (int)(weightedSum / totalResidency);
+    if (activeResidency > 0) {
+        return (int)(weightedSum / activeResidency);
     }
     return 0;
 }
@@ -318,14 +339,15 @@ SocMetrics sampleMetrics(int durationMs) {
             CFStringRef unit = IOReportChannelGetUnitLabel(channel);
             double watts = energyToWatts(energy, durationNs, unit);
 
-            // CPU Power
-            if (CFStringFind(name, CFSTR("CPU"), 0).location != kCFNotFound &&
-                CFStringFind(name, CFSTR("GPU"), 0).location == kCFNotFound) {
-                metrics.cpuPower += watts;
-            }
-            // GPU Power
-            else if (CFStringFind(name, CFSTR("GPU"), 0).location != kCFNotFound) {
+            // GPU Power - match "GPU Energy" or "GPU0 Energy" etc
+            if (CFStringFind(name, CFSTR("GPU"), 0).location != kCFNotFound &&
+                CFStringFind(name, CFSTR("Energy"), 0).location != kCFNotFound) {
                 metrics.gpuPower += watts;
+            }
+            // CPU Power - match "CPU Energy" but not GPU
+            else if (CFStringFind(name, CFSTR("CPU"), 0).location != kCFNotFound &&
+                     CFStringFind(name, CFSTR("Energy"), 0).location != kCFNotFound) {
+                metrics.cpuPower += watts;
             }
             // ANE Power
             else if (CFStringFind(name, CFSTR("ANE"), 0).location != kCFNotFound) {
@@ -359,11 +381,13 @@ SocMetrics sampleMetrics(int durationMs) {
                 }
             }
         }
-        // GPU Stats group
+        // GPU Stats group - look for GPUPH channel in GPU Performance States subgroup
         else if (CFStringCompare(group, CFSTR("GPU Stats"), 0) == kCFCompareEqualTo) {
-            if (name && CFStringCompare(name, CFSTR("GPU Performance States"), 0) == kCFCompareEqualTo) {
-                metrics.gpuUsage = calculateActiveRatio(channel);
-                metrics.gpuFreqMHz = calculateWeightedFreq(channel, gpuFreqs, gpuFreqCount);
+            if (subgroup && CFStringFind(subgroup, CFSTR("GPU Performance States"), 0).location != kCFNotFound) {
+                if (CFStringFind(name, CFSTR("GPUPH"), 0).location != kCFNotFound) {
+                    metrics.gpuUsage = calculateActiveRatio(channel);
+                    metrics.gpuFreqMHz = calculateWeightedFreq(channel, gpuFreqs, gpuFreqCount);
+                }
             }
         }
     }

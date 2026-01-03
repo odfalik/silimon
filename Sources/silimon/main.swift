@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-let version = "0.4.4"
+let version = "0.5.0"
 
 // Handle command line arguments
 let args = CommandLine.arguments
