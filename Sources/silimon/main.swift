@@ -20,6 +20,7 @@ if args.contains("--help") || args.contains("-h") {
       -h, --help       Show this help message
       -v, --version    Show version number
       --foreground     Run in foreground (don't daemonize)
+      --debug          Print metrics to console (for validation)
 
     Silimon monitors Apple Silicon performance metrics in your menu bar:
       - CPU/GPU usage and power consumption
@@ -30,6 +31,12 @@ if args.contains("--help") || args.contains("-h") {
 
     For more information: https://github.com/odfalik/silimon
     """)
+    exit(0)
+}
+
+// Debug mode: print metrics to console without GUI
+if args.contains("--debug") {
+    runDebugMode()
     exit(0)
 }
 
