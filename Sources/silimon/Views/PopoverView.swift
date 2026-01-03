@@ -46,49 +46,51 @@ struct PopoverView: View {
 
             Divider()
 
-            // Metrics Grid
+            // Metrics Grid - ordered by settings.metricOrder
             ScrollView {
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
                     GridItem(.flexible())
                 ], spacing: 12) {
-                    if settings.gpuModuleEnabled {
-                        GPUView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
-                    }
-                    if settings.cpuModuleEnabled {
-                        CPUView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
-                    }
-                    if settings.memoryModuleEnabled {
-                        MemoryView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
-                    }
-                    if settings.powerModuleEnabled {
-                        PowerView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+                    ForEach(settings.metricOrder) { metric in
+                        if settings.isModuleEnabled(metric) {
+                            metricView(for: metric)
+                        }
                     }
                 }
                 .padding()
             }
 
-            Divider()
+            // Footer - only show if thermal pressure is not nominal
+            if metricsCollector.currentMetrics.thermalPressure != .nominal {
+                Divider()
 
-            // Footer
-            HStack {
-                if metricsCollector.currentMetrics.thermalPressure != .nominal {
+                HStack {
                     Label(metricsCollector.currentMetrics.thermalPressure.rawValue.capitalized,
                           systemImage: "thermometer")
                         .foregroundColor(thermalColor)
                         .font(.caption)
+                    Spacer()
                 }
-
-                Spacer()
-
-                Text("Updated: \(timeString)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
         }
         .frame(width: 320, height: 420)
+    }
+
+    @ViewBuilder
+    private func metricView(for metric: MetricType) -> some View {
+        switch metric {
+        case .power:
+            PowerView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+        case .memory:
+            MemoryView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+        case .cpu:
+            CPUView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+        case .gpu:
+            GPUView(metrics: metricsCollector.currentMetrics, history: metricsCollector.history)
+        }
     }
 
     private var thermalColor: Color {
@@ -97,11 +99,5 @@ struct PopoverView: View {
         case .fair: return .yellow
         case .serious: return .red
         }
-    }
-
-    private var timeString: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .medium
-        return formatter.string(from: metricsCollector.currentMetrics.timestamp)
     }
 }

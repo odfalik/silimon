@@ -1,6 +1,43 @@
 import Foundation
 import Combine
 
+/// Metric types that can be displayed
+enum MetricType: String, CaseIterable, Codable, Identifiable {
+    case power
+    case memory
+    case cpu
+    case gpu
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .power: return "Power"
+        case .memory: return "Memory"
+        case .cpu: return "CPU"
+        case .gpu: return "GPU"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .power: return "bolt.fill"
+        case .memory: return "memorychip"
+        case .cpu: return "cpu.fill"
+        case .gpu: return "cpu"
+        }
+    }
+
+    var color: String {
+        switch self {
+        case .power: return "orange"
+        case .memory: return "purple"
+        case .cpu: return "blue"
+        case .gpu: return "green"
+        }
+    }
+}
+
 /// App settings with UserDefaults persistence
 class Settings: ObservableObject {
     static let shared = Settings()
@@ -59,7 +96,56 @@ class Settings: ObservableObject {
         }
     }
 
+    // MARK: - Metric Order
+
+    @Published var metricOrder: [MetricType] {
+        didSet {
+            let rawValues = metricOrder.map { $0.rawValue }
+            defaults.set(rawValues, forKey: Keys.metricOrder)
+        }
+    }
+
     // MARK: - Computed Properties
+
+    /// Get whether a metric is shown in the status bar
+    func isShownInBar(_ metric: MetricType) -> Bool {
+        switch metric {
+        case .power: return showPowerInStatusBar
+        case .memory: return showMemoryInStatusBar
+        case .cpu: return showCPUInStatusBar
+        case .gpu: return showGPUInStatusBar
+        }
+    }
+
+    /// Set whether a metric is shown in the status bar
+    func setShownInBar(_ metric: MetricType, _ value: Bool) {
+        switch metric {
+        case .power: showPowerInStatusBar = value
+        case .memory: showMemoryInStatusBar = value
+        case .cpu: showCPUInStatusBar = value
+        case .gpu: showGPUInStatusBar = value
+        }
+    }
+
+    /// Get whether a metric module is enabled (shown in panel)
+    func isModuleEnabled(_ metric: MetricType) -> Bool {
+        switch metric {
+        case .power: return powerModuleEnabled
+        case .memory: return memoryModuleEnabled
+        case .cpu: return cpuModuleEnabled
+        case .gpu: return gpuModuleEnabled
+        }
+    }
+
+    /// Set whether a metric module is enabled (shown in panel)
+    func setModuleEnabled(_ metric: MetricType, _ value: Bool) {
+        switch metric {
+        case .power: powerModuleEnabled = value
+        case .memory: memoryModuleEnabled = value
+        case .cpu: cpuModuleEnabled = value
+        case .gpu: gpuModuleEnabled = value
+        }
+    }
 
     /// Returns true if powermetrics is needed (any module that requires it is enabled)
     var needsPowerMetrics: Bool {
@@ -79,6 +165,7 @@ class Settings: ObservableObject {
         static let powerModuleEnabled = "powerModuleEnabled"
         static let samplingInterval = "samplingInterval"
         static let launchAtLogin = "launchAtLogin"
+        static let metricOrder = "metricOrder"
     }
 
     // MARK: - Initialization
@@ -109,6 +196,17 @@ class Settings: ObservableObject {
         powerModuleEnabled = defaults.bool(forKey: Keys.powerModuleEnabled)
         samplingInterval = defaults.double(forKey: Keys.samplingInterval)
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
+
+        // Load metric order
+        if let savedOrder = defaults.stringArray(forKey: Keys.metricOrder) {
+            metricOrder = savedOrder.compactMap { MetricType(rawValue: $0) }
+            // Ensure all metrics are present
+            for metric in MetricType.allCases where !metricOrder.contains(metric) {
+                metricOrder.append(metric)
+            }
+        } else {
+            metricOrder = MetricType.allCases.map { $0 }
+        }
 
         // Ensure sampling interval is within valid range
         if samplingInterval < 0.5 || samplingInterval > 5.0 {

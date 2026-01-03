@@ -71,60 +71,49 @@ class StatusBarView: NSView {
         let fs = "\u{2007}"
         let noData = "--"
 
-        if settings.showPowerInStatusBar {
-            let hasData = metrics.packagePower > 0
-            let fillPercent = hasData ? min(metrics.packagePower / 100.0, 1.0) : 0
-            let text: String
-            if hasData {
-                let value = String(format: "%.0f", metrics.packagePower)
-                text = String(repeating: fs, count: max(0, 3 - value.count)) + value + "W"
-            } else {
-                text = fs + noData + "W"
-            }
-            items.append(StatusItem(text: text, icon: "bolt.fill", fillPercent: fillPercent, color: powerColor))
-        }
+        // Build items in the order specified by settings
+        for metric in settings.metricOrder {
+            guard settings.isShownInBar(metric) else { continue }
 
-        if settings.showMemoryInStatusBar {
-            let hasData = metrics.memoryTotalGB > 0
-            let fillPercent = hasData ? metrics.memoryUsagePercent / 100.0 : 0
-            let text: String
-            if hasData {
-                let value = String(format: "%.0f", metrics.memoryUsagePercent)
-                text = String(repeating: fs, count: max(0, 3 - value.count)) + value + "%"
-            } else {
-                text = fs + noData + "%"
-            }
-            items.append(StatusItem(text: text, icon: "memorychip", fillPercent: fillPercent, color: memoryColor))
-        }
+            let (hasData, rawValue, fillPercent, unit, icon, color) = metricData(for: metric)
 
-        if settings.showCPUInStatusBar {
-            let cpuUsage = max(metrics.eCoreUsage, metrics.pCoreUsage)
-            let hasData = metrics.eCoreFrequencyMHz > 0 || metrics.pCoreFrequencyMHz > 0 || cpuUsage > 0
-            let fillPercent = hasData ? cpuUsage / 100.0 : 0
             let text: String
             if hasData {
-                let value = String(format: "%.0f", cpuUsage)
-                text = String(repeating: fs, count: max(0, 3 - value.count)) + value + "%"
+                let value = String(format: "%.0f", rawValue)
+                text = String(repeating: fs, count: max(0, 3 - value.count)) + value + unit
             } else {
-                text = fs + noData + "%"
+                text = fs + noData + unit
             }
-            items.append(StatusItem(text: text, icon: "cpu.fill", fillPercent: fillPercent, color: cpuColor))
-        }
 
-        if settings.showGPUInStatusBar {
-            let hasData = metrics.gpuFrequencyMHz > 0 || metrics.gpuUsage > 0
-            let fillPercent = hasData ? metrics.gpuUsage / 100.0 : 0
-            let text: String
-            if hasData {
-                let value = String(format: "%.0f", metrics.gpuUsage)
-                text = String(repeating: fs, count: max(0, 3 - value.count)) + value + "%"
-            } else {
-                text = fs + noData + "%"
-            }
-            items.append(StatusItem(text: text, icon: "cpu", fillPercent: fillPercent, color: gpuColor))
+            items.append(StatusItem(text: text, icon: icon, fillPercent: fillPercent, color: color))
         }
 
         return items
+    }
+
+    private func metricData(for metric: MetricType) -> (hasData: Bool, value: Double, fillPercent: Double, unit: String, icon: String, color: NSColor) {
+        switch metric {
+        case .power:
+            let hasData = metrics.packagePower > 0
+            let fillPercent = hasData ? min(metrics.packagePower / 100.0, 1.0) : 0
+            return (hasData, metrics.packagePower, fillPercent, "W", "bolt.fill", powerColor)
+
+        case .memory:
+            let hasData = metrics.memoryTotalGB > 0
+            let fillPercent = hasData ? metrics.memoryUsagePercent / 100.0 : 0
+            return (hasData, metrics.memoryUsagePercent, fillPercent, "%", "memorychip", memoryColor)
+
+        case .cpu:
+            let cpuUsage = max(metrics.eCoreUsage, metrics.pCoreUsage)
+            let hasData = metrics.eCoreFrequencyMHz > 0 || metrics.pCoreFrequencyMHz > 0 || cpuUsage > 0
+            let fillPercent = hasData ? cpuUsage / 100.0 : 0
+            return (hasData, cpuUsage, fillPercent, "%", "cpu.fill", cpuColor)
+
+        case .gpu:
+            let hasData = metrics.gpuFrequencyMHz > 0 || metrics.gpuUsage > 0
+            let fillPercent = hasData ? metrics.gpuUsage / 100.0 : 0
+            return (hasData, metrics.gpuUsage, fillPercent, "%", "cpu", gpuColor)
+        }
     }
 
     override func draw(_ dirtyRect: NSRect) {

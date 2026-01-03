@@ -31,45 +31,32 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     // Metrics Section
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("METRICS")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 4)
+                        HStack {
+                            Text("METRICS")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("Drag to reorder")
+                                .font(.caption2)
+                                .foregroundColor(.secondary.opacity(0.6))
+                        }
+                        .padding(.horizontal, 4)
 
-                        VStack(spacing: 1) {
-                            MetricToggleRow(
-                                icon: "bolt.fill",
-                                title: "Power",
-                                color: .orange,
-                                showInBar: $settings.showPowerInStatusBar,
-                                moduleEnabled: $settings.powerModuleEnabled,
-                                onModuleChange: onSettingsChanged
-                            )
-                            MetricToggleRow(
-                                icon: "memorychip",
-                                title: "Memory",
-                                color: .purple,
-                                showInBar: $settings.showMemoryInStatusBar,
-                                moduleEnabled: $settings.memoryModuleEnabled,
-                                onModuleChange: onSettingsChanged
-                            )
-                            MetricToggleRow(
-                                icon: "cpu.fill",
-                                title: "CPU",
-                                color: .blue,
-                                showInBar: $settings.showCPUInStatusBar,
-                                moduleEnabled: $settings.cpuModuleEnabled,
-                                onModuleChange: onSettingsChanged
-                            )
-                            MetricToggleRow(
-                                icon: "cpu",
-                                title: "GPU",
-                                color: .green,
-                                showInBar: $settings.showGPUInStatusBar,
-                                moduleEnabled: $settings.gpuModuleEnabled,
-                                onModuleChange: onSettingsChanged
-                            )
+                        VStack(spacing: 0) {
+                            ForEach(settings.metricOrder) { metric in
+                                MetricRow(
+                                    metric: metric,
+                                    settings: settings,
+                                    onModuleChange: onSettingsChanged
+                                )
+                                if metric != settings.metricOrder.last {
+                                    Divider().padding(.leading, 52)
+                                }
+                            }
+                            .onMove { from, to in
+                                settings.metricOrder.move(fromOffsets: from, toOffset: to)
+                            }
                         }
                         .background(Color(NSColor.controlBackgroundColor))
                         .cornerRadius(8)
@@ -162,7 +149,7 @@ struct SettingsView: View {
                             }) {
                                 HStack {
                                     Image(systemName: "exclamationmark.bubble")
-                                    Text("Issue")
+                                    Text("Report Issue")
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 6)
@@ -189,55 +176,107 @@ struct SettingsView: View {
     }
 }
 
-struct MetricToggleRow: View {
-    let icon: String
-    let title: String
-    let color: Color
-    @Binding var showInBar: Bool
-    @Binding var moduleEnabled: Bool
+// MARK: - Metric Row with Pill Toggles
+
+struct MetricRow: View {
+    let metric: MetricType
+    @ObservedObject var settings: Settings
     var onModuleChange: () -> Void
 
+    private var color: Color {
+        switch metric {
+        case .power: return .orange
+        case .memory: return .purple
+        case .cpu: return .blue
+        case .gpu: return .green
+        }
+    }
+
+    private var showInBar: Bool {
+        settings.isShownInBar(metric)
+    }
+
+    private var moduleEnabled: Bool {
+        settings.isModuleEnabled(metric)
+    }
+
+    private var isDisabled: Bool {
+        !showInBar && !moduleEnabled
+    }
+
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
+            // Drag handle
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.secondary.opacity(0.6))
+
             // Icon with color indicator
             ZStack {
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(color.opacity(0.15))
+                    .fill(color.opacity(isDisabled ? 0.05 : 0.15))
                     .frame(width: 28, height: 28)
-                Image(systemName: icon)
+                Image(systemName: metric.icon)
                     .font(.system(size: 14))
-                    .foregroundColor(color)
+                    .foregroundColor(isDisabled ? .secondary : color)
             }
 
-            Text(title)
+            Text(metric.displayName)
                 .fontWeight(.medium)
+                .foregroundColor(isDisabled ? .secondary : .primary)
 
             Spacer()
 
-            // Menu bar toggle
-            VStack(spacing: 2) {
-                Toggle("", isOn: $showInBar)
-                    .labelsHidden()
-                    .toggleStyle(SwitchToggleStyle(tint: color))
-                    .scaleEffect(0.8)
-                Text("Bar")
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
-            }
+            // Pill toggles
+            HStack(spacing: 6) {
+                PillToggle(
+                    label: "Bar",
+                    isOn: showInBar,
+                    color: color
+                ) {
+                    settings.setShownInBar(metric, !showInBar)
+                }
 
-            // Module toggle
-            VStack(spacing: 2) {
-                Toggle("", isOn: $moduleEnabled)
-                    .labelsHidden()
-                    .toggleStyle(SwitchToggleStyle(tint: color))
-                    .scaleEffect(0.8)
-                    .onChange(of: moduleEnabled) { _ in onModuleChange() }
-                Text("Panel")
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
+                PillToggle(
+                    label: "Panel",
+                    isOn: moduleEnabled,
+                    color: color
+                ) {
+                    settings.setModuleEnabled(metric, !moduleEnabled)
+                    onModuleChange()
+                }
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
+        .contentShape(Rectangle())
+    }
+}
+
+// MARK: - Pill Toggle Button
+
+struct PillToggle: View {
+    let label: String
+    let isOn: Bool
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(isOn ? .white : .secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isOn ? color : Color.clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(isOn ? Color.clear : Color.secondary.opacity(0.3), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 }
