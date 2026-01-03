@@ -20,9 +20,17 @@ struct MetricRowView: View {
 
     var body: some View {
         HStack(spacing: 0) {
+            // Drag handle (only in settings mode)
+            if isSettingsMode {
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary.opacity(0.5))
+                    .frame(width: 20)
+            }
+
             // Left side: stats
             statsView
-                .frame(width: 100, alignment: .leading)
+                .frame(width: isSettingsMode ? 80 : 100, alignment: .leading)
 
             // Right side: chart or settings pills
             if isSettingsMode {
