@@ -16,9 +16,16 @@ struct PopoverView: View {
 
             Divider()
 
-            // Update banner at top when available
-            if updateChecker.updateAvailable {
+            // Update banner at top when available (only in settings mode)
+            if updateChecker.updateAvailable && isSettingsMode {
                 updateBanner
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+            }
+
+            // Star repo prompt (shown once after using for a while)
+            if settings.shouldShowStarPrompt && !isSettingsMode {
+                starPromptBanner
                     .padding(.horizontal)
                     .padding(.top, 8)
             }
@@ -81,16 +88,6 @@ struct PopoverView: View {
                     .font(.subheadline)
                     .fontWeight(.light)
                     .foregroundColor(.secondary)
-            }
-
-            if updateChecker.updateAvailable {
-                Text("v\(updateChecker.latestVersion ?? "")")
-                    .font(.caption2)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(4)
             }
 
             Spacer()
@@ -229,6 +226,64 @@ struct PopoverView: View {
             }
         }
         .padding(.top, 4)
+    }
+
+    // MARK: - Star Prompt Banner
+
+    private var starPromptBanner: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Image(systemName: "star.fill")
+                    .foregroundColor(.yellow)
+                    .frame(width: 16)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Enjoying Silimon?")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Text("A star on GitHub helps others discover it!")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+
+            HStack(spacing: 8) {
+                Button(action: {
+                    settings.hasAskedToStarRepo = true
+                }) {
+                    Text("Not now")
+                        .font(.caption)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                }
+                .buttonStyle(.bordered)
+
+                Button(action: {
+                    settings.hasAskedToStarRepo = true
+                    if let url = URL(string: "https://github.com/odfalik/silimon") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "star")
+                            .font(.caption)
+                        Text("Star on GitHub")
+                            .font(.caption)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.yellow)
+            }
+        }
+        .padding(12)
+        .background(Color.yellow.opacity(0.1))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+        )
     }
 
     // MARK: - Update Banner

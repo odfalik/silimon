@@ -4,7 +4,7 @@ PREFIX ?= /usr/local
 BINARY = silimon
 BUILD_DIR = .build/release
 
-.PHONY: all build release install uninstall clean setup-sudo run stop
+.PHONY: all build release install uninstall clean run stop
 
 all: build
 
@@ -19,20 +19,15 @@ install: release
 	install $(BUILD_DIR)/$(BINARY) $(PREFIX)/bin/$(BINARY)
 	@echo ""
 	@echo "Installed to $(PREFIX)/bin/$(BINARY)"
-	@echo ""
-	@echo "Run 'sudo Scripts/setup-sudo.sh' to enable passwordless powermetrics"
+	@echo "Run 'silimon' to start!"
 
 uninstall:
 	rm -f $(PREFIX)/bin/$(BINARY)
 	@echo "Uninstalled $(BINARY)"
-	@echo "Run 'sudo Scripts/uninstall.sh' to remove sudoers entry"
 
 clean:
 	swift package clean
 	rm -rf .build
-
-setup-sudo:
-	sudo Scripts/setup-sudo.sh
 
 run: build
 	.build/debug/$(BINARY)
@@ -40,7 +35,6 @@ run: build
 # Development helpers
 dev: build
 	@echo "Starting silimon in development mode..."
-	@echo "Note: Run with 'sudo make dev' for full metrics access"
 	@echo "Use 'make stop' to stop silimon"
 	.build/debug/$(BINARY)
 
@@ -57,7 +51,6 @@ help:
 	@echo "  make install     - Install to $(PREFIX)/bin"
 	@echo "  make uninstall   - Remove from $(PREFIX)/bin"
 	@echo "  make clean       - Clean build artifacts"
-	@echo "  make setup-sudo  - Setup passwordless powermetrics"
 	@echo "  make run         - Build and run"
 	@echo "  make dev         - Build and run in dev mode"
 	@echo "  make stop        - Stop running silimon"

@@ -74,6 +74,11 @@ class UpdateChecker: ObservableObject {
 
     /// Compare versions using semantic versioning
     private func isNewerVersion(_ latest: String) -> Bool {
+        // Quick check: if versions are identical strings, no update needed
+        if latest == currentVersion {
+            return false
+        }
+
         let current = parseVersion(currentVersion)
         let remote = parseVersion(latest)
 

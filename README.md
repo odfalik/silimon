@@ -10,7 +10,7 @@ A lightweight macOS menu bar app for monitoring Apple Silicon performance metric
 
 ## Why Silimon?
 
-Unlike other system monitors that use IOKit/SMC sensors, Silimon uses Apple's `powermetrics` tool to show metrics that other apps **cannot display** on Apple Silicon:
+Silimon uses Apple's IOReport API to show metrics that other apps **cannot display** on Apple Silicon - no sudo required:
 
 | Metric | Others | Silimon |
 |--------|--------|---------|
@@ -29,6 +29,7 @@ Unlike other system monitors that use IOKit/SMC sensors, Silimon uses Apple's `p
 - **Memory pressure** - Used memory, pressure state, and swap
 - **Thermal state** - Current thermal pressure level
 - **History charts** - Sparkline trends for all metrics
+- **No sudo required** - Uses IOReport API for direct access to SoC metrics
 
 ## Installation
 
@@ -37,16 +38,11 @@ Unlike other system monitors that use IOKit/SMC sensors, Silimon uses Apple's `p
 brew tap odfalik/silimon
 brew install silimon
 
-# Enable passwordless powermetrics (one-time setup)
-sudo $(brew --prefix)/opt/silimon/Scripts/setup-sudo.sh
-
 # Start silimon
 silimon
 ```
 
 Click the menu bar icon to view metrics. Use the gear icon for settings (sampling rate, launch at login, etc.).
-
-> **Note**: Without the setup script, you'll be prompted for your password each time Silimon starts.
 
 <details>
 <summary><strong>Build from Source</strong></summary>
@@ -55,7 +51,6 @@ Click the menu bar icon to view metrics. Use the gear icon for settings (samplin
 git clone https://github.com/odfalik/silimon.git
 cd silimon
 make install
-sudo Scripts/setup-sudo.sh
 silimon
 ```
 
@@ -65,7 +60,7 @@ silimon
 <summary><strong>Requirements</strong></summary>
 
 - macOS 13.0 (Ventura) or later
-- Apple Silicon Mac (M1, M2, M3, etc.)
+- Apple Silicon Mac (M1, M2, M3, M4, etc.)
 - Xcode 14.0+ (for building from source)
 
 </details>
@@ -73,30 +68,16 @@ silimon
 <details>
 <summary><strong>How It Works</strong></summary>
 
-Silimon uses Apple's `powermetrics` command-line tool for low-level SoC telemetry:
+Silimon uses Apple's IOReport API for low-level SoC telemetry. This provides:
 
-```bash
-sudo powermetrics --samplers cpu_power,gpu_power,thermal -f plist
-```
+- CPU cluster frequencies (E-core and P-core)
+- Per-component power consumption (CPU, GPU, ANE, DRAM)
+- GPU frequency and utilization
+- Thermal state
 
-This provides CPU cluster frequencies, GPU metrics, per-component power consumption, and thermal state. Memory metrics use `vm_stat` and `memory_pressure` (no sudo required).
+Memory metrics use the Mach kernel API (no special permissions required).
 
-</details>
-
-<details>
-<summary><strong>Sudo Configuration</strong></summary>
-
-The setup script creates `/etc/sudoers.d/silimon` with:
-```
-%admin ALL=(root) NOPASSWD: /usr/bin/powermetrics
-```
-
-**Enable Touch ID for Sudo (Optional):**
-```bash
-sudo sed -i '' '2i\
-auth       sufficient     pam_tid.so
-' /etc/pam.d/sudo
-```
+Unlike tools that use `powermetrics`, Silimon accesses IOReport directly without requiring sudo, making it ideal for a menu bar app.
 
 </details>
 
@@ -105,7 +86,6 @@ auth       sufficient     pam_tid.so
 
 ```bash
 brew uninstall silimon
-sudo rm /etc/sudoers.d/silimon
 rm ~/Library/LaunchAgents/com.silimon.app.plist  # if launch at login was enabled
 ```
 
@@ -129,4 +109,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Credits
 
-Inspired by [asitop](https://github.com/tlkh/asitop) - the original Apple Silicon performance monitor.
+- Inspired by [asitop](https://github.com/tlkh/asitop) - the original Apple Silicon performance monitor
+- IOReport implementation based on [mactop](https://github.com/metaspartan/mactop) - a Go-based macOS system monitor

@@ -1,40 +1,39 @@
 #!/bin/bash
 # Silimon - Uninstall script
-# Removes sudoers entry and cleans up
+# Cleans up silimon installation
 
 set -e
-
-SUDOERS_FILE="/etc/sudoers.d/silimon"
 
 echo "Silimon - Uninstall"
 echo "==================="
 echo ""
 
-# Check if running as root
-if [[ $EUID -ne 0 ]]; then
-    echo "This script must be run with sudo:"
-    echo "  sudo $0"
-    exit 1
-fi
-
-# Remove sudoers entry
+# Remove any old sudoers entry if it exists (from older versions)
+SUDOERS_FILE="/etc/sudoers.d/silimon"
 if [[ -f "$SUDOERS_FILE" ]]; then
-    echo "Removing sudoers entry..."
-    rm -f "$SUDOERS_FILE"
-    echo "Sudoers entry removed."
-else
-    echo "No sudoers entry found."
+    if [[ $EUID -ne 0 ]]; then
+        echo "Found old sudoers entry from a previous version."
+        echo "Run 'sudo rm $SUDOERS_FILE' to remove it (no longer needed)."
+    else
+        echo "Removing old sudoers entry (no longer needed)..."
+        rm -f "$SUDOERS_FILE"
+        echo "Sudoers entry removed."
+    fi
 fi
 
-# Clean up temp files
-echo "Cleaning up temp files..."
-rm -f /tmp/silimon_metrics_*
+# Remove launch agent if present
+LAUNCH_AGENT="$HOME/Library/LaunchAgents/com.silimon.app.plist"
+if [[ -f "$LAUNCH_AGENT" ]]; then
+    echo "Removing launch agent..."
+    launchctl unload "$LAUNCH_AGENT" 2>/dev/null || true
+    rm -f "$LAUNCH_AGENT"
+    echo "Launch agent removed."
+fi
 
 echo ""
-echo "Uninstall complete!"
+echo "Cleanup complete!"
 echo ""
-echo "Note: This script does not remove the silimon binary."
-echo "To fully uninstall, also run:"
+echo "To fully uninstall the binary, run:"
 echo "  brew uninstall silimon   # if installed via Homebrew"
 echo "  # or"
 echo "  rm /usr/local/bin/silimon   # if installed manually"
