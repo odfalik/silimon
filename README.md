@@ -76,6 +76,20 @@ Unlike tools that use `powermetrics`, Silimon accesses IOReport directly without
 </details>
 
 <details>
+<summary><strong>Troubleshooting</strong></summary>
+
+If metrics aren't showing correctly, open Settings (gear icon) and click **Diagnose** to run system diagnostics. This will check:
+
+- macOS version and architecture compatibility
+- IOReport API availability (for power metrics)
+- System command availability (vm_stat, memory_pressure)
+- Network interface and battery access
+
+You can copy the diagnostic report to include in bug reports.
+
+</details>
+
+<details>
 <summary><strong>Uninstall</strong></summary>
 
 ```bash
