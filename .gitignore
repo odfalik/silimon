@@ -1,5 +1,21 @@
-out/
-node_modules/
-.vscode-test/
-*.vsix
+# Swift/Xcode
+.build/
+.swiftpm/
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+*.dSYM.zip
+*.dSYM
+
+# macOS
 .DS_Store
+*.swp
+*~
+
+# Build artifacts
+/build/
+
+# IDE
+.idea/
+.vscode/

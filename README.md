@@ -1,48 +1,146 @@
-# Silicon Tracker
+# Silimon
 
-Real-time GPU, CPU, and power monitoring for Apple Silicon Macs in VS Code.
+A lightweight macOS menu bar app for monitoring Apple Silicon performance metrics.
+
+![macOS](https://img.shields.io/badge/macOS-13.0+-blue)
+![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+## Why Silimon?
+
+Unlike other system monitors (like [Stats](https://github.com/exelban/stats)) that use IOKit/SMC sensors, Silimon uses Apple's `powermetrics` tool to show metrics that other apps **cannot display** on Apple Silicon:
+
+| Metric | Stats | Silimon |
+|--------|-------|---------|
+| CPU/GPU Usage | ✅ | ✅ |
+| Memory Usage | ✅ | ✅ |
+| **CPU Frequency (E/P cores)** | ❌ | ✅ |
+| **Per-component Power (W)** | ❌ | ✅ |
+| **ANE Power** | ❌ | ✅ |
+| **Package Power** | ❌ | ✅ |
 
 ## Features
 
-- **Live Metrics Panel** - GPU usage, CPU usage (E-cores & P-cores), and power consumption
-- **History Charts** - Configurable rolling window (10-120 seconds)
-- **Status Bar** - Compact view showing GPU%, CPU%, Power, or all three
-- **Dynamic Sample Rate** - Faster updates when panel is open, slower in background
-- **Thermal Monitoring** - Color-coded thermal pressure indicator
+- **Real-time power monitoring** - See CPU, GPU, and ANE power consumption in watts
+- **CPU cluster frequencies** - E-core and P-core frequencies in MHz
+- **GPU utilization** - Active usage percentage and frequency
+- **Memory pressure** - Used memory, pressure state, and swap
+- **Thermal state** - Current thermal pressure level
+- **Compact UI** - Minimal menu bar footprint with detailed popover
+- **History charts** - Sparkline trends for all metrics
+
+## Installation
+
+### Homebrew (Recommended)
+
+```bash
+# Add the tap (first time only)
+brew tap odfalik/silimon
+
+# Install
+brew install silimon
+```
+
+### Build from Source
+
+```bash
+git clone https://github.com/odfalik/silimon.git
+cd silimon
+make install
+sudo Scripts/setup-sudo.sh
+```
+
+## Usage
+
+```bash
+# Start silimon
+silimon
+
+# Or run with sudo (if you haven't set up passwordless powermetrics)
+sudo silimon
+```
+
+Click the menu bar icon to see the detailed metrics popover.
 
 ## Requirements
 
-- macOS with Apple Silicon (M1, M2, M3, etc.)
-- Sudo access for `powermetrics`
+- macOS 13.0 (Ventura) or later
+- Apple Silicon Mac (M1, M2, M3, etc.)
+- Xcode 14.0+ (for building from source)
 
-## Setup
+## Sudo Access
 
-The extension uses macOS's `powermetrics` command which requires root access. On first run, you'll be prompted to set up passwordless sudo:
+Silimon requires `sudo` access to run `powermetrics`. During installation, a sudoers entry is created to allow passwordless execution:
 
-1. Open Terminal
-2. Run: `sudo visudo`
-3. Add this line at the end:
-   ```
-   %admin ALL=(ALL) NOPASSWD: /usr/bin/powermetrics
-   ```
-4. Save and restart VS Code
+```bash
+# Manual setup (if needed)
+sudo Scripts/setup-sudo.sh
+```
 
-## Settings
+This creates `/etc/sudoers.d/silimon` with:
+```
+%admin ALL=(root) NOPASSWD: /usr/bin/powermetrics
+```
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `siliconTracker.sampleRate` | 1000 | Sample rate (ms) when panel is open |
-| `siliconTracker.backgroundSampleRate` | 2000 | Sample rate (ms) when panel is closed |
-| `siliconTracker.historyDuration` | 20 | History duration in seconds (10-120) |
-| `siliconTracker.statusBarDisplay` | gpu | What to show: `gpu`, `cpu`, `power`, `all`, or `none` |
+### Enable Touch ID for Sudo (Optional)
 
-## Commands
+If you prefer Touch ID authentication:
 
-- `Silicon Tracker: Start Monitoring` - Start the monitor
-- `Silicon Tracker: Stop Monitoring` - Stop the monitor
-- `Silicon Tracker: Open Monitor Panel` - Open the metrics panel
-- `Silicon Tracker: Show Details (Text)` - Show detailed text output
+```bash
+sudo sed -i '' '2i\
+auth       sufficient     pam_tid.so
+' /etc/pam.d/sudo
+```
+
+## Uninstall
+
+```bash
+# If installed via Homebrew
+brew uninstall silimon
+
+# Remove sudoers entry
+sudo rm /etc/sudoers.d/silimon
+
+# Or use the uninstall script
+sudo Scripts/uninstall.sh
+```
+
+## How It Works
+
+Silimon uses Apple's `powermetrics` command-line tool, which provides access to low-level SoC telemetry:
+
+```bash
+sudo powermetrics --samplers cpu_power,gpu_power,thermal -f plist
+```
+
+The plist output includes:
+- CPU cluster idle ratios and frequencies
+- GPU idle ratio and frequency
+- Per-component power consumption (mW)
+- Thermal pressure state
+
+Memory metrics are collected using `vm_stat` and `memory_pressure` (no sudo required).
+
+## Development
+
+```bash
+# Build
+make build
+
+# Run in development mode
+make dev
+
+# Build release version
+make release
+
+# Clean build artifacts
+make clean
+```
 
 ## License
 
-MIT
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Credits
+
+Inspired by [asitop](https://github.com/tlkh/asitop) - the original Apple Silicon performance monitor.
