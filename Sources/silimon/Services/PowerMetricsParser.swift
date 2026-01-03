@@ -20,8 +20,13 @@ struct PowerMetricsParser {
     }
 
     func parse(from url: URL) -> Result? {
-        guard let data = try? Data(contentsOf: url),
-              let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
+        guard let content = try? String(contentsOf: url, encoding: .utf8) else {
+            return nil
+        }
+
+        // powermetrics appends multiple plists to the file
+        // We need to find and parse the last complete plist
+        guard let plist = extractLastPlist(from: content) else {
             return nil
         }
 
@@ -29,14 +34,18 @@ struct PowerMetricsParser {
 
         // Parse GPU metrics
         if let gpu = plist["gpu"] as? [String: Any] {
-            if let idleRatio = gpu["gpu_idle_ratio"] as? Double {
+            if let idleRatio = gpu["idle_ratio"] as? Double {
                 result.gpuUsage = (1 - idleRatio) * 100
             }
-            if let freqHz = gpu["gpu_freq_hz"] as? Double {
-                result.gpuFrequencyMHz = freqHz / 1_000_000
+            if let freqHz = gpu["freq_hz"] as? Double {
+                result.gpuFrequencyMHz = freqHz
             }
-            if let powerMw = gpu["gpu_power"] as? Double {
-                result.gpuPower = powerMw / 1000
+        }
+
+        // GPU power is under processor, not gpu
+        if let processor = plist["processor"] as? [String: Any] {
+            if let gpuPowerMw = processor["gpu_power"] as? Double {
+                result.gpuPower = gpuPowerMw / 1000
             }
         }
 
@@ -89,14 +98,13 @@ struct PowerMetricsParser {
 
         // Parse power metrics
         if let processor = plist["processor"] as? [String: Any] {
-            if let cpuPowerMw = processor["combined_power"] as? Double {
-                result.cpuPower = cpuPowerMw / 1000
-            } else if let cpuPowerMw = processor["cpu_power"] as? Double {
+            if let cpuPowerMw = processor["cpu_power"] as? Double {
                 result.cpuPower = cpuPowerMw / 1000
             }
 
-            if let packagePowerMw = processor["package_power"] as? Double {
-                result.packagePower = packagePowerMw / 1000
+            // combined_power is the total package power (CPU + GPU + ANE)
+            if let combinedPowerMw = processor["combined_power"] as? Double {
+                result.packagePower = combinedPowerMw / 1000
             }
 
             if let anePowerMw = processor["ane_power"] as? Double {
@@ -117,5 +125,34 @@ struct PowerMetricsParser {
         }
 
         return result
+    }
+
+    /// Extract the last complete plist from a file that may contain multiple appended plists
+    private func extractLastPlist(from content: String) -> [String: Any]? {
+        // Find all plist boundaries
+        let plistEnd = "</plist>"
+        let plistStart = "<?xml"
+
+        // Find the last complete plist
+        guard let lastEndRange = content.range(of: plistEnd, options: .backwards) else {
+            return nil
+        }
+
+        // Find the start of this plist (search backwards from the end)
+        let searchRange = content.startIndex..<lastEndRange.lowerBound
+        guard let lastStartRange = content.range(of: plistStart, options: .backwards, range: searchRange) else {
+            return nil
+        }
+
+        // Extract the last plist
+        let plistString = String(content[lastStartRange.lowerBound...lastEndRange.upperBound])
+
+        // Parse it
+        guard let data = plistString.data(using: .utf8),
+              let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
+            return nil
+        }
+
+        return plist
     }
 }

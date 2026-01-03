@@ -14,21 +14,24 @@ class MetricsCollector: ObservableObject {
     private var powerMetricsProcess: Process?
     private var tempFile: URL?
 
-    private let sampleInterval: TimeInterval = 1.0
+    private let settings: Settings
+
+    init(settings: Settings = .shared) {
+        self.settings = settings
+    }
 
     func start() {
         guard !isCollecting else { return }
         isCollecting = true
         error = nil
 
-        // Start powermetrics process
-        startPowerMetrics()
-
-        // Start polling timer
-        timer = Timer.scheduledTimer(withTimeInterval: sampleInterval, repeats: true) { [weak self] _ in
-            self?.collectSample()
+        // Start powermetrics process if needed
+        if settings.needsPowerMetrics {
+            startPowerMetrics()
         }
-        timer?.tolerance = 0.1
+
+        // Start polling timer with configured interval
+        startTimer()
 
         // Collect first sample immediately
         collectSample()
@@ -41,29 +44,52 @@ class MetricsCollector: ObservableObject {
         stopPowerMetrics()
     }
 
+    /// Called when settings change - restarts collection with new settings
+    func restart() {
+        stop()
+        start()
+    }
+
+    private func startTimer() {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: settings.samplingInterval, repeats: true) { [weak self] _ in
+            self?.collectSample()
+        }
+        timer?.tolerance = settings.samplingInterval * 0.1
+    }
+
     private func collectSample() {
         var metrics = Metrics(timestamp: Date())
 
-        // Collect memory stats (no sudo needed)
-        let memStats = memoryStats.collect()
-        metrics.memoryUsedGB = memStats.usedGB
-        metrics.memoryTotalGB = memStats.totalGB
-        metrics.memoryPressure = memStats.pressure
-        metrics.swapUsedGB = memStats.swapGB
+        // Collect memory stats (no sudo needed) - only if memory module is enabled
+        if settings.memoryModuleEnabled {
+            let memStats = memoryStats.collect()
+            metrics.memoryUsedGB = memStats.usedGB
+            metrics.memoryTotalGB = memStats.totalGB
+            metrics.memoryPressure = memStats.pressure
+            metrics.swapUsedGB = memStats.swapGB
+        }
 
-        // Read powermetrics data if available
-        if let tempFile = tempFile,
+        // Read powermetrics data if available and any relevant module is enabled
+        if settings.needsPowerMetrics,
+           let tempFile = tempFile,
            let powerData = powerMetricsParser.parse(from: tempFile) {
-            metrics.gpuUsage = powerData.gpuUsage
-            metrics.gpuFrequencyMHz = powerData.gpuFrequencyMHz
-            metrics.gpuPower = powerData.gpuPower
-            metrics.eCoreUsage = powerData.eCoreUsage
-            metrics.pCoreUsage = powerData.pCoreUsage
-            metrics.eCoreFrequencyMHz = powerData.eCoreFrequencyMHz
-            metrics.pCoreFrequencyMHz = powerData.pCoreFrequencyMHz
-            metrics.cpuPower = powerData.cpuPower
-            metrics.packagePower = powerData.packagePower
-            metrics.anePower = powerData.anePower
+            if settings.gpuModuleEnabled {
+                metrics.gpuUsage = powerData.gpuUsage
+                metrics.gpuFrequencyMHz = powerData.gpuFrequencyMHz
+                metrics.gpuPower = powerData.gpuPower
+            }
+            if settings.cpuModuleEnabled {
+                metrics.eCoreUsage = powerData.eCoreUsage
+                metrics.pCoreUsage = powerData.pCoreUsage
+                metrics.eCoreFrequencyMHz = powerData.eCoreFrequencyMHz
+                metrics.pCoreFrequencyMHz = powerData.pCoreFrequencyMHz
+                metrics.cpuPower = powerData.cpuPower
+            }
+            if settings.powerModuleEnabled {
+                metrics.packagePower = powerData.packagePower
+                metrics.anePower = powerData.anePower
+            }
             metrics.thermalPressure = powerData.thermalPressure
         }
 

@@ -39,7 +39,15 @@ brew tap odfalik/silimon
 
 # Install
 brew install silimon
+
+# Set up passwordless powermetrics (required, one-time setup)
+sudo $(brew --prefix)/opt/silimon/Scripts/setup-sudo.sh
+
+# Start silimon
+silimon
 ```
+
+After running `silimon`, you'll see a chart icon in your menu bar. Click it to view detailed metrics.
 
 ### Build from Source
 
@@ -48,19 +56,36 @@ git clone https://github.com/odfalik/silimon.git
 cd silimon
 make install
 sudo Scripts/setup-sudo.sh
+silimon
 ```
+
+## Quick Start After Installation
+
+1. **Run the setup script** (required once, enables passwordless powermetrics):
+   ```bash
+   sudo $(brew --prefix)/opt/silimon/Scripts/setup-sudo.sh
+   ```
+
+2. **Start Silimon**:
+   ```bash
+   silimon
+   ```
+
+3. **Click the menu bar icon** to view detailed metrics
+
+4. **Optional: Enable "Launch at Login"** in Settings (click the gear icon in the popover)
+
+> **Note**: Without running the setup script, you'll be prompted for your password each time Silimon starts. The script creates a sudoers entry that allows `powermetrics` to run without a password.
 
 ## Usage
 
-```bash
-# Start silimon
-silimon
+Click the menu bar icon to see the detailed metrics popover. Click the gear icon to access settings where you can:
 
-# Or run with sudo (if you haven't set up passwordless powermetrics)
-sudo silimon
-```
-
-Click the menu bar icon to see the detailed metrics popover.
+- Choose which metrics to show in the menu bar (Power, Memory, CPU, GPU)
+- Enable/disable monitoring modules
+- Adjust the sampling rate (0.5s - 5.0s)
+- Enable "Launch at Login"
+- Quit Silimon
 
 ## Requirements
 
@@ -100,6 +125,9 @@ brew uninstall silimon
 
 # Remove sudoers entry
 sudo rm /etc/sudoers.d/silimon
+
+# Remove launch agent (if "Launch at Login" was enabled)
+rm ~/Library/LaunchAgents/com.silimon.app.plist
 
 # Or use the uninstall script
 sudo Scripts/uninstall.sh
