@@ -4,8 +4,8 @@
 class Silimon < Formula
   desc "Apple Silicon performance monitor for your menu bar"
   homepage "https://github.com/odfalik/silimon"
-  url "https://github.com/odfalik/silimon/archive/refs/tags/v0.5.1.tar.gz"
-  sha256 "PLACEHOLDER_SHA256"
+  url "https://github.com/odfalik/silimon/archive/refs/tags/v0.6.0.tar.gz"
+  sha256 "de1814c52210fb94aa7da3816072812635da0b83d4039eaa29659eb16fc3da6b"
   license "MIT"
   head "https://github.com/odfalik/silimon.git", branch: "main"
 
