@@ -39,15 +39,9 @@ jobs:
           # Build the release binary
           swift build -c release --disable-sandbox
 
-          # Create release directory
-          mkdir -p silimon-release/Scripts
-          cp .build/release/silimon silimon-release/
-          cp Scripts/setup-sudo.sh silimon-release/Scripts/
-          cp Scripts/uninstall.sh silimon-release/Scripts/
-
-          # Create tarball
+          # Create tarball with just the binary
           TARBALL="silimon-${VERSION}-arm64.tar.gz"
-          tar -czvf "$TARBALL" silimon-release
+          tar -czvf "$TARBALL" -C .build/release silimon
 
           # Calculate SHA256
           SHA256=$(shasum -a 256 "$TARBALL" | cut -d' ' -f1)
@@ -78,46 +72,56 @@ jobs:
           git clone https://x-access-token:${GH_TOKEN}@github.com/odfalik/homebrew-silimon.git
           cd homebrew-silimon
 
-          cat > Formula/silimon.rb << EOF
-          # Homebrew formula for Silimon
-          # Auto-updated by GitHub Actions
+          cat > Formula/silimon.rb << 'FORMULA_EOF'
+# Homebrew formula for Silimon
+# Auto-updated by GitHub Actions on new releases
 
-          class Silimon < Formula
-            desc "Apple Silicon performance monitor for your menu bar"
-            homepage "https://github.com/odfalik/silimon"
-            url "https://github.com/odfalik/silimon/releases/download/${TAG}/silimon-${VERSION}-arm64.tar.gz"
-            sha256 "${SHA256}"
-            license "MIT"
+class Silimon < Formula
+  desc "Apple Silicon performance monitor for your menu bar"
+  homepage "https://github.com/odfalik/silimon"
+FORMULA_EOF
 
-            depends_on :macos
-            depends_on arch: :arm64
+          echo "  url \"https://github.com/odfalik/silimon/releases/download/${TAG}/silimon-${VERSION}-arm64.tar.gz\"" >> Formula/silimon.rb
+          echo "  sha256 \"${SHA256}\"" >> Formula/silimon.rb
 
-            def install
-              bin.install "silimon"
-              (pkgshare/"scripts").install "Scripts/setup-sudo.sh"
-              (pkgshare/"scripts").install "Scripts/uninstall.sh"
-            end
+          cat >> Formula/silimon.rb << 'FORMULA_EOF'
+  license "MIT"
 
-            def caveats
-              <<~EOS
-                Silimon monitors Apple Silicon performance metrics in your menu bar.
+  depends_on arch: :arm64
+  depends_on macos: :ventura
 
-                To start silimon:
-                  silimon
+  def install
+    bin.install "silimon"
+  end
 
-                First run may require: sudo silimon
-                Or run: \$(brew --prefix)/share/silimon/scripts/setup-sudo.sh
-              EOS
-            end
+  def caveats
+    <<~EOS
+      Silimon monitors Apple Silicon performance metrics in your menu bar.
 
-            test do
-              assert_match "silimon", shell_output("#{bin}/silimon --help 2>&1", 0)
-            end
-          end
-          EOF
+      Features:
+        - Real-time power consumption (CPU, GPU, ANE)
+        - CPU cluster frequencies (E-cores vs P-cores)
+        - Memory usage and pressure
+        - GPU utilization
+        - Network throughput
+        - Battery status
+
+      No sudo required! Start silimon with:
+        silimon
+
+      If metrics aren't working, open Settings and click "Diagnose"
+      to run system diagnostics.
+    EOS
+  end
+
+  test do
+    assert_match "silimon", shell_output("#{bin}/silimon --version")
+  end
+end
+FORMULA_EOF
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/silimon.rb
-          git commit -m "Update silimon to ${TAG} with pre-built binary"
+          git commit -m "Update silimon to ${TAG}"
           git push
