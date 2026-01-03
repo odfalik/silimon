@@ -1,5 +1,8 @@
 # Silimon
 
+<img width="259" height="28" alt="image" src="https://github.com/user-attachments/assets/526d54c4-6e50-4159-b8b0-1fb1d07a9ea0" />
+
+
 A lightweight macOS menu bar app for monitoring Apple Silicon performance metrics.
 
 ![macOS](https://img.shields.io/badge/macOS-13.0+-blue)
