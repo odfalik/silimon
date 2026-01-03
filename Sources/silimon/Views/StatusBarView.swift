@@ -16,6 +16,8 @@ class StatusBarView: NSView {
     private let pillSpacing: CGFloat = 6
     private let cornerRadius: CGFloat = 4
     private let textPadding: CGFloat = 6
+    private let iconSize: CGFloat = 10
+    private let iconTextSpacing: CGFloat = 3
 
     init(settings: Settings) {
         self.settings = settings
@@ -41,7 +43,8 @@ class StatusBarView: NSView {
 
         for (index, item) in items.enumerated() {
             let textWidth = (item.text as NSString).size(withAttributes: [.font: font]).width
-            totalWidth += textWidth + textPadding * 2
+            // icon + spacing + text + padding on both sides
+            totalWidth += iconSize + iconTextSpacing + textWidth + textPadding * 2
             if index < items.count - 1 {
                 totalWidth += pillSpacing
             }
@@ -57,6 +60,7 @@ class StatusBarView: NSView {
 
     private struct StatusItem {
         let text: String
+        let icon: String
         let fillPercent: Double
         let color: NSColor
     }
@@ -65,39 +69,59 @@ class StatusBarView: NSView {
         var items: [StatusItem] = []
         // Figure space (U+2007) has the same width as digits
         let fs = "\u{2007}"
+        let noData = "--"
 
         if settings.showPowerInStatusBar {
-            // Power: assume 100W as max for fill calculation
-            let fillPercent = min(metrics.packagePower / 100.0, 1.0)
-            // Fixed width: up to 999W (3 digits)
-            let value = String(format: "%.0f", metrics.packagePower)
-            let padded = String(repeating: fs, count: max(0, 3 - value.count)) + value
-            items.append(StatusItem(text: padded + "W", fillPercent: fillPercent, color: powerColor))
+            let hasData = metrics.packagePower > 0
+            let fillPercent = hasData ? min(metrics.packagePower / 100.0, 1.0) : 0
+            let text: String
+            if hasData {
+                let value = String(format: "%.0f", metrics.packagePower)
+                text = String(repeating: fs, count: max(0, 3 - value.count)) + value + "W"
+            } else {
+                text = fs + noData + "W"
+            }
+            items.append(StatusItem(text: text, icon: "bolt.fill", fillPercent: fillPercent, color: powerColor))
         }
 
         if settings.showMemoryInStatusBar {
-            let fillPercent = metrics.memoryUsagePercent / 100.0
-            // Fixed width: 0-100% (3 digits)
-            let value = String(format: "%.0f", metrics.memoryUsagePercent)
-            let padded = String(repeating: fs, count: max(0, 3 - value.count)) + value
-            items.append(StatusItem(text: padded + "%", fillPercent: fillPercent, color: memoryColor))
+            let hasData = metrics.memoryTotalGB > 0
+            let fillPercent = hasData ? metrics.memoryUsagePercent / 100.0 : 0
+            let text: String
+            if hasData {
+                let value = String(format: "%.0f", metrics.memoryUsagePercent)
+                text = String(repeating: fs, count: max(0, 3 - value.count)) + value + "%"
+            } else {
+                text = fs + noData + "%"
+            }
+            items.append(StatusItem(text: text, icon: "memorychip", fillPercent: fillPercent, color: memoryColor))
         }
 
         if settings.showCPUInStatusBar {
             let cpuUsage = max(metrics.eCoreUsage, metrics.pCoreUsage)
-            let fillPercent = cpuUsage / 100.0
-            // Fixed width: 0-100% (3 digits)
-            let value = String(format: "%.0f", cpuUsage)
-            let padded = String(repeating: fs, count: max(0, 3 - value.count)) + value
-            items.append(StatusItem(text: "C" + padded + "%", fillPercent: fillPercent, color: cpuColor))
+            let hasData = metrics.eCoreFrequencyMHz > 0 || metrics.pCoreFrequencyMHz > 0 || cpuUsage > 0
+            let fillPercent = hasData ? cpuUsage / 100.0 : 0
+            let text: String
+            if hasData {
+                let value = String(format: "%.0f", cpuUsage)
+                text = String(repeating: fs, count: max(0, 3 - value.count)) + value + "%"
+            } else {
+                text = fs + noData + "%"
+            }
+            items.append(StatusItem(text: text, icon: "cpu.fill", fillPercent: fillPercent, color: cpuColor))
         }
 
         if settings.showGPUInStatusBar {
-            let fillPercent = metrics.gpuUsage / 100.0
-            // Fixed width: 0-100% (3 digits)
-            let value = String(format: "%.0f", metrics.gpuUsage)
-            let padded = String(repeating: fs, count: max(0, 3 - value.count)) + value
-            items.append(StatusItem(text: "G" + padded + "%", fillPercent: fillPercent, color: gpuColor))
+            let hasData = metrics.gpuFrequencyMHz > 0 || metrics.gpuUsage > 0
+            let fillPercent = hasData ? metrics.gpuUsage / 100.0 : 0
+            let text: String
+            if hasData {
+                let value = String(format: "%.0f", metrics.gpuUsage)
+                text = String(repeating: fs, count: max(0, 3 - value.count)) + value + "%"
+            } else {
+                text = fs + noData + "%"
+            }
+            items.append(StatusItem(text: text, icon: "cpu", fillPercent: fillPercent, color: gpuColor))
         }
 
         return items
@@ -117,7 +141,7 @@ class StatusBarView: NSView {
 
         for item in items {
             let textSize = (item.text as NSString).size(withAttributes: [.font: font])
-            let pillWidth = textSize.width + textPadding * 2
+            let pillWidth = iconSize + iconTextSpacing + textSize.width + textPadding * 2
             let pillRect = NSRect(x: xOffset, y: yOffset, width: pillWidth, height: pillHeight)
 
             // Draw background pill
@@ -142,10 +166,25 @@ class StatusBarView: NSView {
                 NSGraphicsContext.restoreGraphicsState()
             }
 
-            // Draw text
             let textColor = isDarkMode ? NSColor.white : NSColor.black
+
+            // Draw icon
+            if let iconImage = NSImage(systemSymbolName: item.icon, accessibilityDescription: nil) {
+                let config = NSImage.SymbolConfiguration(pointSize: iconSize, weight: .medium)
+                let configuredImage = iconImage.withSymbolConfiguration(config)?
+                    .tinted(with: textColor)
+                let iconRect = NSRect(
+                    x: xOffset + textPadding,
+                    y: yOffset + (pillHeight - iconSize) / 2,
+                    width: iconSize,
+                    height: iconSize
+                )
+                configuredImage?.draw(in: iconRect, from: .zero, operation: .sourceOver, fraction: 1.0)
+            }
+
+            // Draw text
             let textRect = NSRect(
-                x: xOffset + textPadding,
+                x: xOffset + textPadding + iconSize + iconTextSpacing,
                 y: yOffset + (pillHeight - textSize.height) / 2,
                 width: textSize.width,
                 height: textSize.height
@@ -159,5 +198,17 @@ class StatusBarView: NSView {
 
             xOffset += pillWidth + pillSpacing
         }
+    }
+}
+
+extension NSImage {
+    func tinted(with color: NSColor) -> NSImage {
+        let image = self.copy() as! NSImage
+        image.lockFocus()
+        color.set()
+        let imageRect = NSRect(origin: .zero, size: image.size)
+        imageRect.fill(using: .sourceAtop)
+        image.unlockFocus()
+        return image
     }
 }

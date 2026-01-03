@@ -28,49 +28,69 @@ struct SettingsView: View {
             Divider()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    // Status Bar Section
-                    SettingsSection(title: "Status Bar Display") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Show in menu bar:")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 12) {
+                    // Metrics Section
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("METRICS")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 4)
 
-                            Toggle("Power (W)", isOn: $settings.showPowerInStatusBar)
-                            Toggle("Memory (GB)", isOn: $settings.showMemoryInStatusBar)
-                            Toggle("CPU (%)", isOn: $settings.showCPUInStatusBar)
-                            Toggle("GPU (%)", isOn: $settings.showGPUInStatusBar)
+                        VStack(spacing: 1) {
+                            MetricToggleRow(
+                                icon: "bolt.fill",
+                                title: "Power",
+                                color: .orange,
+                                showInBar: $settings.showPowerInStatusBar,
+                                moduleEnabled: $settings.powerModuleEnabled,
+                                onModuleChange: onSettingsChanged
+                            )
+                            MetricToggleRow(
+                                icon: "memorychip",
+                                title: "Memory",
+                                color: .purple,
+                                showInBar: $settings.showMemoryInStatusBar,
+                                moduleEnabled: $settings.memoryModuleEnabled,
+                                onModuleChange: onSettingsChanged
+                            )
+                            MetricToggleRow(
+                                icon: "cpu.fill",
+                                title: "CPU",
+                                color: .blue,
+                                showInBar: $settings.showCPUInStatusBar,
+                                moduleEnabled: $settings.cpuModuleEnabled,
+                                onModuleChange: onSettingsChanged
+                            )
+                            MetricToggleRow(
+                                icon: "cpu",
+                                title: "GPU",
+                                color: .green,
+                                showInBar: $settings.showGPUInStatusBar,
+                                moduleEnabled: $settings.gpuModuleEnabled,
+                                onModuleChange: onSettingsChanged
+                            )
                         }
-                    }
-
-                    // Modules Section
-                    SettingsSection(title: "Modules") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Enable/disable monitoring modules:")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-
-                            Toggle("GPU", isOn: $settings.gpuModuleEnabled)
-                                .onChange(of: settings.gpuModuleEnabled) { _ in onSettingsChanged() }
-                            Toggle("CPU", isOn: $settings.cpuModuleEnabled)
-                                .onChange(of: settings.cpuModuleEnabled) { _ in onSettingsChanged() }
-                            Toggle("Memory", isOn: $settings.memoryModuleEnabled)
-                                .onChange(of: settings.memoryModuleEnabled) { _ in onSettingsChanged() }
-                            Toggle("Power", isOn: $settings.powerModuleEnabled)
-                                .onChange(of: settings.powerModuleEnabled) { _ in onSettingsChanged() }
-                        }
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
                     }
 
                     // Sampling Rate Section
-                    SettingsSection(title: "Sampling Rate") {
-                        VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("REFRESH RATE")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 4)
+
+                        VStack(spacing: 8) {
                             HStack {
-                                Text("Interval:")
-                                    .font(.caption)
+                                Image(systemName: "timer")
                                     .foregroundColor(.secondary)
+                                    .frame(width: 20)
+                                Text("Update interval")
                                 Spacer()
                                 Text(String(format: "%.1fs", settings.samplingInterval))
-                                    .font(.caption)
                                     .foregroundColor(.secondary)
                                     .monospacedDigit()
                             }
@@ -79,52 +99,88 @@ struct SettingsView: View {
                                 .onChange(of: settings.samplingInterval) { _ in onSettingsChanged() }
 
                             HStack {
-                                Text("0.5s")
+                                Text("Faster")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
-                                    .opacity(0.7)
                                 Spacer()
-                                Text("5.0s")
+                                Text("Battery saver")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
-                                    .opacity(0.7)
                             }
                         }
+                        .padding(12)
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
                     }
 
                     // Startup Section
-                    SettingsSection(title: "Startup") {
-                        Toggle("Launch at Login", isOn: $settings.launchAtLogin)
-                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("STARTUP")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 4)
 
-                    Spacer(minLength: 16)
-
-                    // GitHub Button
-                    Button(action: {
-                        if let url = URL(string: "https://github.com/odfalik/silimon") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "star")
-                            Text("Star on GitHub")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                    }
-                    .buttonStyle(.bordered)
-
-                    // Quit Button
-                    Button(action: { NSApp.terminate(nil) }) {
                         HStack {
                             Image(systemName: "power")
-                            Text("Quit Silimon")
+                                .foregroundColor(.secondary)
+                                .frame(width: 20)
+                            Text("Launch at login")
+                            Spacer()
+                            Toggle("", isOn: $settings.launchAtLogin)
+                                .labelsHidden()
+                                .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(12)
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.red)
+
+                    Spacer(minLength: 8)
+
+                    // Footer buttons
+                    VStack(spacing: 8) {
+                        HStack(spacing: 8) {
+                            Button(action: {
+                                if let url = URL(string: "https://github.com/odfalik/silimon") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: "star")
+                                    Text("Star")
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 6)
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button(action: {
+                                if let url = URL(string: "https://github.com/odfalik/silimon/issues/new") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: "exclamationmark.bubble")
+                                    Text("Issue")
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 6)
+                            }
+                            .buttonStyle(.bordered)
+                        }
+
+                        Button(action: { NSApp.terminate(nil) }) {
+                            HStack {
+                                Image(systemName: "xmark.circle.fill")
+                                Text("Quit Silimon")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.red)
+                    }
                 }
                 .padding()
             }
@@ -133,22 +189,55 @@ struct SettingsView: View {
     }
 }
 
-struct SettingsSection<Content: View>: View {
+struct MetricToggleRow: View {
+    let icon: String
     let title: String
-    @ViewBuilder let content: Content
+    let color: Color
+    @Binding var showInBar: Bool
+    @Binding var moduleEnabled: Bool
+    var onModuleChange: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.semibold)
+        HStack(spacing: 12) {
+            // Icon with color indicator
+            ZStack {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(color.opacity(0.15))
+                    .frame(width: 28, height: 28)
+                Image(systemName: icon)
+                    .font(.system(size: 14))
+                    .foregroundColor(color)
+            }
 
-            content
-                .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+            Text(title)
+                .fontWeight(.medium)
+
+            Spacer()
+
+            // Menu bar toggle
+            VStack(spacing: 2) {
+                Toggle("", isOn: $showInBar)
+                    .labelsHidden()
+                    .toggleStyle(SwitchToggleStyle(tint: color))
+                    .scaleEffect(0.8)
+                Text("Bar")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+            }
+
+            // Module toggle
+            VStack(spacing: 2) {
+                Toggle("", isOn: $moduleEnabled)
+                    .labelsHidden()
+                    .toggleStyle(SwitchToggleStyle(tint: color))
+                    .scaleEffect(0.8)
+                    .onChange(of: moduleEnabled) { _ in onModuleChange() }
+                Text("Panel")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+            }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(NSColor.controlBackgroundColor))
-        .cornerRadius(8)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
     }
 }
