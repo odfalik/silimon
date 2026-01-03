@@ -20,6 +20,7 @@ enum MetricType: String, CaseIterable, Codable, Identifiable {
     case cpu
     case gpu
     case memory
+    case network
     case battery
 
     var id: String { rawValue }
@@ -30,6 +31,7 @@ enum MetricType: String, CaseIterable, Codable, Identifiable {
         case .memory: return "Memory"
         case .cpu: return "CPU"
         case .gpu: return "GPU"
+        case .network: return "Network"
         case .battery: return "Battery"
         }
     }
@@ -40,6 +42,7 @@ enum MetricType: String, CaseIterable, Codable, Identifiable {
         case .memory: return "memorychip"
         case .cpu: return "cpu.fill"
         case .gpu: return "cpu"
+        case .network: return "network"
         case .battery: return "battery.100"
         }
     }
@@ -50,6 +53,7 @@ enum MetricType: String, CaseIterable, Codable, Identifiable {
         case .memory: return "purple"
         case .cpu: return "blue"
         case .gpu: return "green"
+        case .network: return "cyan"
         case .battery: return "green"
         }
     }
@@ -83,6 +87,10 @@ class Settings: ObservableObject {
         didSet { defaults.set(showBatteryInStatusBar, forKey: Keys.showBatteryInStatusBar) }
     }
 
+    @Published var showNetworkInStatusBar: Bool {
+        didSet { defaults.set(showNetworkInStatusBar, forKey: Keys.showNetworkInStatusBar) }
+    }
+
     // MARK: - Module Enable/Disable
 
     @Published var gpuModuleEnabled: Bool {
@@ -103,6 +111,10 @@ class Settings: ObservableObject {
 
     @Published var batteryModuleEnabled: Bool {
         didSet { defaults.set(batteryModuleEnabled, forKey: Keys.batteryModuleEnabled) }
+    }
+
+    @Published var networkModuleEnabled: Bool {
+        didSet { defaults.set(networkModuleEnabled, forKey: Keys.networkModuleEnabled) }
     }
 
     // MARK: - Sampling Settings
@@ -166,6 +178,7 @@ class Settings: ObservableObject {
         case .memory: return showMemoryInStatusBar
         case .cpu: return showCPUInStatusBar
         case .gpu: return showGPUInStatusBar
+        case .network: return showNetworkInStatusBar
         case .battery: return showBatteryInStatusBar
         }
     }
@@ -177,6 +190,7 @@ class Settings: ObservableObject {
         case .memory: showMemoryInStatusBar = value
         case .cpu: showCPUInStatusBar = value
         case .gpu: showGPUInStatusBar = value
+        case .network: showNetworkInStatusBar = value
         case .battery: showBatteryInStatusBar = value
         }
     }
@@ -188,6 +202,7 @@ class Settings: ObservableObject {
         case .memory: return memoryModuleEnabled
         case .cpu: return cpuModuleEnabled
         case .gpu: return gpuModuleEnabled
+        case .network: return networkModuleEnabled
         case .battery: return batteryModuleEnabled
         }
     }
@@ -199,6 +214,7 @@ class Settings: ObservableObject {
         case .memory: memoryModuleEnabled = value
         case .cpu: cpuModuleEnabled = value
         case .gpu: gpuModuleEnabled = value
+        case .network: networkModuleEnabled = value
         case .battery: batteryModuleEnabled = value
         }
     }
@@ -251,11 +267,13 @@ class Settings: ObservableObject {
         static let showCPUInStatusBar = "showCPUInStatusBar"
         static let showGPUInStatusBar = "showGPUInStatusBar"
         static let showBatteryInStatusBar = "showBatteryInStatusBar"
+        static let showNetworkInStatusBar = "showNetworkInStatusBar"
         static let gpuModuleEnabled = "gpuModuleEnabled"
         static let cpuModuleEnabled = "cpuModuleEnabled"
         static let memoryModuleEnabled = "memoryModuleEnabled"
         static let powerModuleEnabled = "powerModuleEnabled"
         static let batteryModuleEnabled = "batteryModuleEnabled"
+        static let networkModuleEnabled = "networkModuleEnabled"
         static let samplingInterval = "samplingInterval"
         static let launchAtLogin = "launchAtLogin"
         static let metricOrder = "metricOrder"
@@ -280,6 +298,8 @@ class Settings: ObservableObject {
             Keys.memoryModuleEnabled: true,
             Keys.powerModuleEnabled: true,
             Keys.batteryModuleEnabled: true,
+            Keys.networkModuleEnabled: true,
+            Keys.showNetworkInStatusBar: false,
             Keys.samplingInterval: 1.0,
             Keys.launchAtLogin: false,
             Keys.statusBarMode: StatusBarMode.text.rawValue
@@ -291,11 +311,13 @@ class Settings: ObservableObject {
         showCPUInStatusBar = defaults.bool(forKey: Keys.showCPUInStatusBar)
         showGPUInStatusBar = defaults.bool(forKey: Keys.showGPUInStatusBar)
         showBatteryInStatusBar = defaults.bool(forKey: Keys.showBatteryInStatusBar)
+        showNetworkInStatusBar = defaults.bool(forKey: Keys.showNetworkInStatusBar)
         gpuModuleEnabled = defaults.bool(forKey: Keys.gpuModuleEnabled)
         cpuModuleEnabled = defaults.bool(forKey: Keys.cpuModuleEnabled)
         memoryModuleEnabled = defaults.bool(forKey: Keys.memoryModuleEnabled)
         powerModuleEnabled = defaults.bool(forKey: Keys.powerModuleEnabled)
         batteryModuleEnabled = defaults.bool(forKey: Keys.batteryModuleEnabled)
+        networkModuleEnabled = defaults.bool(forKey: Keys.networkModuleEnabled)
         samplingInterval = defaults.double(forKey: Keys.samplingInterval)
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
         if let modeString = defaults.string(forKey: Keys.statusBarMode),

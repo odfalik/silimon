@@ -12,6 +12,7 @@ class MetricsCollector: ObservableObject {
     private var timer: Timer?
     private let memoryStats = MemoryStats()
     private let batteryStats = BatteryStats()
+    private let networkStats = NetworkStats()
     private let ioReportService: IOReportService
     private var powerStateObserver: NSObjectProtocol?
 
@@ -118,6 +119,13 @@ class MetricsCollector: ObservableObject {
             metrics.batteryLevel = batStats.level
             metrics.batteryIsCharging = batStats.isCharging
             metrics.batteryTimeRemaining = batStats.timeRemaining
+        }
+
+        // Collect network stats - only if network module is enabled
+        if settings.networkModuleEnabled {
+            let netStats = networkStats.collect()
+            metrics.networkBytesInPerSec = netStats.bytesInPerSec
+            metrics.networkBytesOutPerSec = netStats.bytesOutPerSec
         }
 
         // Collect power/CPU/GPU metrics via IOReport

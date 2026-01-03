@@ -32,6 +32,10 @@ struct Metrics: Identifiable {
     var batteryIsCharging: Bool = false
     var batteryTimeRemaining: Int? = nil  // Minutes remaining (nil if calculating or on AC)
 
+    // Network metrics
+    var networkBytesInPerSec: Double = 0
+    var networkBytesOutPerSec: Double = 0
+
     // Thermal
     var thermalPressure: ThermalPressure = .nominal
 

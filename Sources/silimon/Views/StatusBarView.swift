@@ -10,6 +10,7 @@ class StatusBarView: NSView {
     private let memoryColor = NSColor.systemPurple
     private let cpuColor = NSColor.systemBlue
     private let gpuColor = NSColor.systemGreen
+    private let networkColor = NSColor.systemCyan
     private let batteryColor = NSColor.systemYellow
 
     private let menuBarHeight: CGFloat = 22
@@ -129,6 +130,23 @@ class StatusBarView: NSView {
             let fillPercent = hasData ? metrics.gpuUsage / 100.0 : 0
             return (hasData, metrics.gpuUsage, fillPercent, "%", "cpu", gpuColor)
 
+        case .network:
+            let totalBytesPerSec = metrics.networkBytesInPerSec + metrics.networkBytesOutPerSec
+            let hasData = totalBytesPerSec > 0
+            // Show download speed in KB/s or MB/s
+            let displayValue: Double
+            let unit: String
+            if metrics.networkBytesInPerSec < 1024 * 1024 {
+                displayValue = metrics.networkBytesInPerSec / 1024
+                unit = "K"
+            } else {
+                displayValue = metrics.networkBytesInPerSec / 1024 / 1024
+                unit = "M"
+            }
+            // Fill based on 10 MB/s max
+            let fillPercent = hasData ? min(metrics.networkBytesInPerSec / (10 * 1024 * 1024), 1.0) : 0
+            return (hasData, displayValue, fillPercent, unit, "arrow.down", networkColor)
+
         case .battery:
             let hasData = metrics.batteryLevel > 0
             let fillPercent = hasData ? metrics.batteryLevel / 100.0 : 0
@@ -239,6 +257,7 @@ class StatusBarView: NSView {
             (cpuColor, history.map { max($0.eCoreUsage, $0.pCoreUsage) }, 100.0),  // CPU %
             (gpuColor, history.map { $0.gpuUsage }, 100.0),  // GPU %
             (memoryColor, history.map { $0.memoryUsagePercent }, 100.0),  // Memory %
+            (networkColor, history.map { $0.networkBytesInPerSec / 1024 / 1024 }, 10.0),  // Network MB/s (max 10)
         ]
 
         let inset: CGFloat = 2

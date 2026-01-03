@@ -19,6 +19,7 @@ struct MetricRowView: View {
         case .memory: return .purple
         case .cpu: return .blue
         case .gpu: return .green
+        case .network: return .cyan
         case .battery: return .green
         }
     }
@@ -69,6 +70,8 @@ struct MetricRowView: View {
             cpuStats
         case .gpu:
             gpuStats
+        case .network:
+            networkStats
         case .battery:
             batteryStats
         }
@@ -304,6 +307,41 @@ struct MetricRowView: View {
         }
     }
 
+    private var networkStats: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                Image(systemName: "network")
+                    .font(.system(size: 10))
+                    .foregroundColor(color)
+                Text("Network")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Image(systemName: "arrow.down")
+                    .font(.system(size: 8, weight: .semibold))
+                    .foregroundColor(.secondary)
+                Text(NetworkStats.formatCompact(metrics.networkBytesInPerSec))
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                Text(NetworkStats.formatCompactUnit(metrics.networkBytesInPerSec))
+                    .font(.system(size: 8))
+                    .foregroundColor(.secondary)
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 8, weight: .semibold))
+                    .foregroundColor(.secondary)
+                Text(NetworkStats.formatCompact(metrics.networkBytesOutPerSec))
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                Text(NetworkStats.formatCompactUnit(metrics.networkBytesOutPerSec))
+                    .font(.system(size: 8))
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+
     // MARK: - Chart View with Fade
 
     private var chartView: some View {
@@ -371,6 +409,9 @@ struct MetricRowView: View {
         case .gpu:
             // GPU: not really a concern
             return 0
+        case .network:
+            // Network: not a concern
+            return 0
         }
     }
 
@@ -384,7 +425,7 @@ struct MetricRowView: View {
             return .orange
         case .power:
             return .orange
-        case .gpu:
+        case .gpu, .network:
             return .clear
         }
     }
@@ -482,6 +523,7 @@ struct MetricRowView: View {
         case .memory: return sample.memoryUsagePercent
         case .cpu: return sample.combinedCpuUsage
         case .gpu: return sample.gpuUsage
+        case .network: return sample.networkBytesInPerSec / 1024 / 1024 // MB/s
         case .battery: return sample.batteryLevel
         }
     }
@@ -489,6 +531,7 @@ struct MetricRowView: View {
     private var chartDomain: ClosedRange<Double> {
         switch metric {
         case .power: return 0...50
+        case .network: return 0...10 // 0-10 MB/s
         case .memory, .cpu, .gpu, .battery: return 0...100
         }
     }

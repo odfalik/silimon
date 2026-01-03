@@ -19,6 +19,7 @@ A simple, lightweight menu bar app that shows Apple Silicon metrics at a glance 
 - **CPU cluster frequencies** - E-core and P-core frequencies in MHz
 - **GPU utilization** - Active usage percentage and frequency
 - **Memory pressure** - Used memory, pressure state, and swap
+- **Network throughput** - Download and upload speeds
 - **Thermal state** - Current thermal pressure level
 - **History charts** - Sparkline trends for all metrics
 - **Menu bar graph mode** - Compact sparkline view in the menu bar

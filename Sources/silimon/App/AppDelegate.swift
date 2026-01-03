@@ -74,6 +74,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .merge(with: settings.$showCPUInStatusBar)
             .merge(with: settings.$showGPUInStatusBar)
             .merge(with: settings.$showBatteryInStatusBar)
+            .merge(with: settings.$showNetworkInStatusBar)
             .sink { [weak self] _ in
                 self?.updateStatusBar()
             }
