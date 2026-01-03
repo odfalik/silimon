@@ -1,0 +1,92 @@
+name: Update Homebrew Tap
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-tap:
+    runs-on: macos-latest
+    steps:
+      - name: Get release info
+        id: release
+        run: |
+          echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          echo "tarball_url=https://github.com/${{ github.repository }}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz" >> $GITHUB_OUTPUT
+
+      - name: Calculate SHA256
+        id: sha
+        run: |
+          SHA=$(curl -sL "${{ steps.release.outputs.tarball_url }}" | shasum -a 256 | cut -d' ' -f1)
+          echo "sha256=${SHA}" >> $GITHUB_OUTPUT
+
+      - name: Update Homebrew tap
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          # Clone the tap repo
+          git clone https://x-access-token:${GH_TOKEN}@github.com/odfalik/homebrew-silimon.git
+          cd homebrew-silimon
+
+          # Update the formula
+          cat > Formula/silimon.rb << 'EOF'
+          # Homebrew formula for Silimon
+          # Auto-updated by GitHub Actions
+
+          class Silimon < Formula
+            desc "Apple Silicon performance monitor for your menu bar"
+            homepage "https://github.com/odfalik/silimon"
+            url "https://github.com/odfalik/silimon/archive/refs/tags/${{ steps.release.outputs.version }}.tar.gz"
+            sha256 "${{ steps.sha.outputs.sha256 }}"
+            license "MIT"
+            head "https://github.com/odfalik/silimon.git", branch: "main"
+
+            depends_on :macos
+            depends_on xcode: ["14.0", :build]
+
+            def install
+              system "swift", "build", "-c", "release", "--disable-sandbox"
+              bin.install ".build/release/silimon"
+
+              # Install scripts
+              (pkgshare/"scripts").install "Scripts/setup-sudo.sh"
+              (pkgshare/"scripts").install "Scripts/uninstall.sh"
+            end
+
+            def post_install
+              # Create sudoers entry for passwordless powermetrics
+              sudoers_file = "/etc/sudoers.d/silimon"
+              unless File.exist?(sudoers_file)
+                ohai "Setting up passwordless powermetrics access..."
+                ohai "You may be prompted for your password."
+                system "sudo", "sh", "-c", "echo '%admin ALL=(root) NOPASSWD: /usr/bin/powermetrics' > #{sudoers_file}"
+                system "sudo", "chmod", "0440", sudoers_file
+              end
+            end
+
+            def caveats
+              <<~EOS
+                Silimon monitors Apple Silicon performance metrics in your menu bar.
+
+                To start silimon:
+                  silimon
+
+                To enable Touch ID for sudo (optional):
+                  sudo sed -i '' '2i\\
+                auth       sufficient     pam_tid.so
+                ' /etc/pam.d/sudo
+              EOS
+            end
+
+            test do
+              assert_match "silimon", shell_output("#{bin}/silimon --help 2>&1", 0)
+            end
+          end
+          EOF
+
+          # Commit and push
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/silimon.rb
+          git commit -m "Update silimon to ${{ steps.release.outputs.version }}"
+          git push
