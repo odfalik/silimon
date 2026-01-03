@@ -1,43 +1,60 @@
-name: Update Homebrew Tap
+name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
-  update-tap:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          release-type: simple
+          package-name: silimon
+
+  update-homebrew:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
     runs-on: macos-latest
     steps:
-      - name: Get release info
-        id: release
-        run: |
-          echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
-          echo "tarball_url=https://github.com/${{ github.repository }}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz" >> $GITHUB_OUTPUT
-
       - name: Calculate SHA256
         id: sha
         run: |
-          SHA=$(curl -sL "${{ steps.release.outputs.tarball_url }}" | shasum -a 256 | cut -d' ' -f1)
+          VERSION="${{ needs.release-please.outputs.tag_name }}"
+          URL="https://github.com/odfalik/silimon/archive/refs/tags/${VERSION}.tar.gz"
+          SHA=$(curl -sL "$URL" | shasum -a 256 | cut -d' ' -f1)
           echo "sha256=${SHA}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Update Homebrew tap
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
-          # Clone the tap repo
           git clone https://x-access-token:${GH_TOKEN}@github.com/odfalik/homebrew-silimon.git
           cd homebrew-silimon
 
-          # Update the formula
-          cat > Formula/silimon.rb << 'EOF'
+          cat > Formula/silimon.rb << 'FORMULA'
           # Homebrew formula for Silimon
           # Auto-updated by GitHub Actions
 
           class Silimon < Formula
             desc "Apple Silicon performance monitor for your menu bar"
             homepage "https://github.com/odfalik/silimon"
-            url "https://github.com/odfalik/silimon/archive/refs/tags/${{ steps.release.outputs.version }}.tar.gz"
-            sha256 "${{ steps.sha.outputs.sha256 }}"
+          FORMULA
+
+          echo "  url \"https://github.com/odfalik/silimon/archive/refs/tags/${{ steps.sha.outputs.version }}.tar.gz\"" >> Formula/silimon.rb
+          echo "  sha256 \"${{ steps.sha.outputs.sha256 }}\"" >> Formula/silimon.rb
+
+          cat >> Formula/silimon.rb << 'FORMULA'
             license "MIT"
             head "https://github.com/odfalik/silimon.git", branch: "main"
 
@@ -47,21 +64,8 @@ jobs:
             def install
               system "swift", "build", "-c", "release", "--disable-sandbox"
               bin.install ".build/release/silimon"
-
-              # Install scripts
               (pkgshare/"scripts").install "Scripts/setup-sudo.sh"
               (pkgshare/"scripts").install "Scripts/uninstall.sh"
-            end
-
-            def post_install
-              # Create sudoers entry for passwordless powermetrics
-              sudoers_file = "/etc/sudoers.d/silimon"
-              unless File.exist?(sudoers_file)
-                ohai "Setting up passwordless powermetrics access..."
-                ohai "You may be prompted for your password."
-                system "sudo", "sh", "-c", "echo '%admin ALL=(root) NOPASSWD: /usr/bin/powermetrics' > #{sudoers_file}"
-                system "sudo", "chmod", "0440", sudoers_file
-              end
             end
 
             def caveats
@@ -71,10 +75,8 @@ jobs:
                 To start silimon:
                   silimon
 
-                To enable Touch ID for sudo (optional):
-                  sudo sed -i '' '2i\\
-                auth       sufficient     pam_tid.so
-                ' /etc/pam.d/sudo
+                First run may require: sudo silimon
+                Or run: $(brew --prefix)/share/silimon/scripts/setup-sudo.sh
               EOS
             end
 
@@ -82,11 +84,10 @@ jobs:
               assert_match "silimon", shell_output("#{bin}/silimon --help 2>&1", 0)
             end
           end
-          EOF
+          FORMULA
 
-          # Commit and push
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/silimon.rb
-          git commit -m "Update silimon to ${{ steps.release.outputs.version }}"
+          git commit -m "Update silimon to ${{ steps.sha.outputs.version }}"
           git push
