@@ -50,9 +50,15 @@ static int gpuFreqCount = 0;
 #pragma mark - Frequency Table Loading
 
 static void loadFrequencyTables(void) {
-    // Load CPU frequency tables from IORegistry
-    io_registry_entry_t entry = IORegistryEntryFromPath(kIOMainPortDefault,
-        "IOService:/AppleARMPE/arm-io/pmgr");
+    // Find pmgr device by matching name (more robust than path)
+    CFMutableDictionaryRef matching = IOServiceNameMatching("pmgr");
+    io_registry_entry_t entry = IOServiceGetMatchingService(kIOMainPortDefault, matching);
+
+    if (entry == MACH_PORT_NULL) {
+        // Fallback to old path-based lookup
+        entry = IORegistryEntryFromPath(kIOMainPortDefault,
+            "IOService:/AppleARMPE/arm-io/pmgr");
+    }
 
     if (entry != MACH_PORT_NULL) {
         // E-cluster frequencies
@@ -88,15 +94,20 @@ static void loadFrequencyTables(void) {
         }
 
         // GPU frequencies - try multiple property names for different chip variants
+        // M3/M4 chips use voltage-states8, M1/M2 use voltage-states9
         CFDataRef gpuData = IORegistryEntryCreateCFProperty(entry,
-            CFSTR("voltage-states9-sram"), kCFAllocatorDefault, 0);
-        if (!gpuData) {
-            gpuData = IORegistryEntryCreateCFProperty(entry,
-                CFSTR("voltage-states9"), kCFAllocatorDefault, 0);
-        }
+            CFSTR("voltage-states8"), kCFAllocatorDefault, 0);
         if (!gpuData) {
             gpuData = IORegistryEntryCreateCFProperty(entry,
                 CFSTR("voltage-states8-sram"), kCFAllocatorDefault, 0);
+        }
+        if (!gpuData) {
+            gpuData = IORegistryEntryCreateCFProperty(entry,
+                CFSTR("voltage-states9-sram"), kCFAllocatorDefault, 0);
+        }
+        if (!gpuData) {
+            gpuData = IORegistryEntryCreateCFProperty(entry,
+                CFSTR("voltage-states9"), kCFAllocatorDefault, 0);
         }
         if (gpuData) {
             size_t len = CFDataGetLength(gpuData);
@@ -339,14 +350,18 @@ SocMetrics sampleMetrics(int durationMs) {
             CFStringRef unit = IOReportChannelGetUnitLabel(channel);
             double watts = energyToWatts(energy, durationNs, unit);
 
-            // GPU Power - match "GPU Energy" or "GPU0 Energy" etc
-            if (CFStringFind(name, CFSTR("GPU"), 0).location != kCFNotFound &&
-                CFStringFind(name, CFSTR("Energy"), 0).location != kCFNotFound) {
+            // GPU Power - match "GPU" or "GPU Energy" (but not "GPU SRAM" separately)
+            if (CFStringCompare(name, CFSTR("GPU"), 0) == kCFCompareEqualTo ||
+                CFStringCompare(name, CFSTR("GPU Energy"), 0) == kCFCompareEqualTo) {
                 metrics.gpuPower += watts;
             }
-            // CPU Power - match "CPU Energy" but not GPU
-            else if (CFStringFind(name, CFSTR("CPU"), 0).location != kCFNotFound &&
-                     CFStringFind(name, CFSTR("Energy"), 0).location != kCFNotFound) {
+            // GPU SRAM Power - add to GPU power
+            else if (CFStringCompare(name, CFSTR("GPU SRAM"), 0) == kCFCompareEqualTo) {
+                metrics.gpuPower += watts;
+            }
+            // CPU Power - match "CPU" exactly or "CPU Energy"
+            else if (CFStringCompare(name, CFSTR("CPU"), 0) == kCFCompareEqualTo ||
+                     CFStringCompare(name, CFSTR("CPU Energy"), 0) == kCFCompareEqualTo) {
                 metrics.cpuPower += watts;
             }
             // ANE Power
@@ -440,4 +455,62 @@ void cleanupIOReport(void) {
     pClusterFreqCount = 0;
     gpuFreqCount = 0;
     initialized = false;
+}
+
+void debugPrintChannels(void) {
+    fprintf(stderr, "\n=== IOReport Debug ===\n");
+    fprintf(stderr, "GPU freq table count: %d\n", gpuFreqCount);
+    if (gpuFreqs && gpuFreqCount > 0) {
+        fprintf(stderr, "GPU frequencies: ");
+        for (int i = 0; i < gpuFreqCount && i < 10; i++) {
+            fprintf(stderr, "%d ", gpuFreqs[i]);
+        }
+        fprintf(stderr, "\n");
+    }
+
+    if (!initialized) {
+        fprintf(stderr, "IOReport not initialized\n");
+        return;
+    }
+
+    CFDictionaryRef sample = IOReportCreateSamples(subscription, subscribedChannels, NULL);
+    if (!sample) {
+        fprintf(stderr, "Failed to create sample\n");
+        return;
+    }
+
+    CFArrayRef channelArray = CFDictionaryGetValue(sample, CFSTR("IOReportChannels"));
+    if (!channelArray) {
+        fprintf(stderr, "No channels in sample\n");
+        CFRelease(sample);
+        return;
+    }
+
+    fprintf(stderr, "\nChannels (%ld total):\n", CFArrayGetCount(channelArray));
+
+    CFIndex count = CFArrayGetCount(channelArray);
+    for (CFIndex i = 0; i < count; i++) {
+        CFDictionaryRef channel = CFArrayGetValueAtIndex(channelArray, i);
+        if (!channel) continue;
+
+        CFStringRef group = IOReportChannelGetGroup(channel);
+        CFStringRef subgroup = IOReportChannelGetSubGroup(channel);
+        CFStringRef name = IOReportChannelGetChannelName(channel);
+
+        char groupStr[256] = "?";
+        char subgroupStr[256] = "?";
+        char nameStr[256] = "?";
+
+        if (group) CFStringGetCString(group, groupStr, sizeof(groupStr), kCFStringEncodingUTF8);
+        if (subgroup) CFStringGetCString(subgroup, subgroupStr, sizeof(subgroupStr), kCFStringEncodingUTF8);
+        if (name) CFStringGetCString(name, nameStr, sizeof(nameStr), kCFStringEncodingUTF8);
+
+        // Only print GPU-related channels
+        if (strstr(groupStr, "GPU") || strstr(nameStr, "GPU") || strstr(subgroupStr, "GPU")) {
+            fprintf(stderr, "  [%s] %s / %s\n", groupStr, subgroupStr, nameStr);
+        }
+    }
+
+    fprintf(stderr, "=== End Debug ===\n\n");
+    CFRelease(sample);
 }

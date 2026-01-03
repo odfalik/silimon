@@ -56,4 +56,7 @@ void cleanupIOReport(void);
 /// Check if IOReport is available on this system
 bool isIOReportAvailable(void);
 
+/// Debug: print all available channels to stderr
+void debugPrintChannels(void);
+
 #endif /* IOReportLib_h */
