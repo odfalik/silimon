@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/odfalik/silimon/compare/v0.4.0...v0.5.0) (2026-01-03)
+
+
+### Features
+
+* add tooltips to memory pressure indicator and swap ([8927324](https://github.com/odfalik/silimon/commit/89273241f0d73c8c517bd2f4d7370bbe3ff457fc))
+
+
+### Bug Fixes
+
+* use native NSView tooltips that work in popovers ([ee3572d](https://github.com/odfalik/silimon/commit/ee3572d4346ba0c3a3c895f50fb8a0cf62fd064e))
+* use NSHostingView wrapper for working tooltips ([7e06654](https://github.com/odfalik/silimon/commit/7e0665437ad518d21f8296e014b72a61abda9a70))
+
 ## [0.3.0](https://github.com/odfalik/silimon/compare/v0.2.0...v0.3.0) (2026-01-03)
 
 
