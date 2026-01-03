@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.2](https://github.com/odfalik/silimon/compare/v0.7.1...v0.7.2) (2026-01-03)
+
+
+### Features
+
+* comprehensive improvements batch ([#17](https://github.com/odfalik/silimon/issues/17)) ([b22dbd7](https://github.com/odfalik/silimon/commit/b22dbd7f2b736b79bc339c97bdcd0fb106395e6c))
+
 ## [0.7.1](https://github.com/odfalik/silimon/compare/v0.7.0...v0.7.1) (2026-01-03)
 
 
