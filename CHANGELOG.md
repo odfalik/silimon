@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/odfalik/silimon/compare/v0.6.0...v0.7.0) (2026-01-03)
+
+
+### Features
+
+* add release workflow skill and cleanup redundant checks ([543a52f](https://github.com/odfalik/silimon/commit/543a52f85a3f301bcf3e4b4bdf831918f6f28a04))
+
+
+### Bug Fixes
+
+* repair release workflow YAML syntax ([f085a7a](https://github.com/odfalik/silimon/commit/f085a7af99848e70a9e3bbbc2614b538c12519a1))
+
 ## [0.6.0](https://github.com/odfalik/silimon/compare/v0.5.1...v0.6.0) (2026-01-03)
 
 
