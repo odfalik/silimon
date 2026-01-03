@@ -8,6 +8,7 @@ class MetricsCollector: ObservableObject {
     @Published private(set) var isCollecting = false
     @Published private(set) var error: String?
     @Published private(set) var isLowPowerMode = false
+    @Published private(set) var collectionHealth = CollectionHealth()
 
     private var timer: Timer?
     private let memoryStats = MemoryStats()
@@ -15,6 +16,7 @@ class MetricsCollector: ObservableObject {
     private let networkStats = NetworkStats()
     private let ioReportService: IOReportService
     private var powerStateObserver: NSObjectProtocol?
+    private let alertService = AlertService.shared
 
     private let settings: Settings
 
@@ -153,7 +155,53 @@ class MetricsCollector: ObservableObject {
         DispatchQueue.main.async {
             self.currentMetrics = metrics
             self.history.add(metrics)
+
+            // Check for alerts
+            self.alertService.checkMetrics(metrics)
+
+            // Update collection health
+            self.updateCollectionHealth(metrics)
         }
+    }
+
+    private func updateCollectionHealth(_ metrics: Metrics) {
+        var health = CollectionHealth()
+
+        // Power/CPU/GPU health based on whether we got valid IOReport data
+        if settings.needsPowerMetrics {
+            if metrics.packagePower > 0 || metrics.cpuPower > 0 {
+                health.power = .healthy
+                health.cpu = .healthy
+                health.gpu = .healthy
+            } else {
+                health.power = CollectionHealth.ModuleHealth(status: .degraded, lastSuccess: nil, errorMessage: "No power data")
+                health.cpu = CollectionHealth.ModuleHealth(status: .degraded, lastSuccess: nil, errorMessage: "No CPU data")
+                health.gpu = CollectionHealth.ModuleHealth(status: .degraded, lastSuccess: nil, errorMessage: "No GPU data")
+            }
+        } else {
+            health.power = .healthy
+            health.cpu = .healthy
+            health.gpu = .healthy
+        }
+
+        // Memory health
+        if settings.memoryModuleEnabled {
+            health.memory = metrics.memoryTotalGB > 0 ? .healthy : CollectionHealth.ModuleHealth(status: .degraded, lastSuccess: nil, errorMessage: "No memory data")
+        } else {
+            health.memory = .healthy
+        }
+
+        // Network health - always healthy if enabled (even 0 bytes is valid)
+        health.network = .healthy
+
+        // Battery health - healthy if we got any reading, or if no battery exists (desktop)
+        if settings.batteryModuleEnabled {
+            health.battery = .healthy  // Even 0% is valid for desktops
+        } else {
+            health.battery = .healthy
+        }
+
+        collectionHealth = health
     }
 
     deinit {

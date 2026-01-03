@@ -87,6 +87,7 @@ struct MetricRowView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+            .tooltip("Total SoC power consumption. Idle: 2-5W, Heavy use: 20-40W")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.1f", metrics.packagePower))
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -164,6 +165,7 @@ struct MetricRowView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+            .tooltip("E-cores: Efficiency (light tasks). P-cores: Performance (heavy work)")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.combinedCpuUsage))
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -209,6 +211,7 @@ struct MetricRowView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+            .tooltip("Integrated GPU usage. Video: 10-30%, Gaming/3D: 50-100%")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.gpuUsage))
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -243,6 +246,7 @@ struct MetricRowView: View {
                         .foregroundColor(.yellow)
                 }
             }
+            .tooltip("Battery level and charging status. Check power usage if draining fast.")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.batteryLevel))
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -317,6 +321,7 @@ struct MetricRowView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+            .tooltip("Current network throughput across all interfaces")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Image(systemName: "arrow.down")
                     .font(.system(size: 8, weight: .semibold))
