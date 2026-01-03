@@ -76,6 +76,13 @@ struct PopoverView: View {
                     .help(error)
             }
 
+            if metricsCollector.isLowPowerMode {
+                Image(systemName: "leaf.fill")
+                    .foregroundColor(.green)
+                    .font(.caption)
+                    .help("Low Power Mode: sampling at \(String(format: "%.1fs", metricsCollector.effectiveSamplingInterval))")
+            }
+
             Button(action: { isSettingsMode.toggle() }) {
                 Image(systemName: isSettingsMode ? "xmark" : "gearshape.fill")
                     .foregroundColor(isSettingsMode ? .primary : .secondary)
