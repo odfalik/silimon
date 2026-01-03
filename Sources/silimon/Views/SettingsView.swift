@@ -99,6 +99,21 @@ struct SettingsView: View {
 
                     Spacer(minLength: 16)
 
+                    // GitHub Button
+                    Button(action: {
+                        if let url = URL(string: "https://github.com/odfalik/silimon") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "star")
+                            Text("Star on GitHub")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                    }
+                    .buttonStyle(.bordered)
+
                     // Quit Button
                     Button(action: { NSApp.terminate(nil) }) {
                         HStack {

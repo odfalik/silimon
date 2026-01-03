@@ -108,30 +108,45 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let metrics = metricsCollector.currentMetrics
         var parts: [String] = []
 
+        // Figure space (U+2007) has the same width as digits in tabular fonts
+        let figureSpace = "\u{2007}"
+
         // Build status bar text based on enabled options
-        if settings.showPowerInStatusBar && metrics.packagePower > 0 {
-            parts.append(String(format: "%.1fW", metrics.packagePower))
+        // Use fixed-width number formatting to prevent width changes
+        // Always show enabled metrics to maintain consistent width
+        if settings.showPowerInStatusBar {
+            parts.append(padWithFigureSpaces(String(format: "%.1fW", metrics.packagePower), toLength: 6, figureSpace: figureSpace))
         }
 
-        if settings.showMemoryInStatusBar && metrics.memoryUsedGB > 0 {
-            parts.append(String(format: "%.1fGB", metrics.memoryUsedGB))
+        if settings.showMemoryInStatusBar {
+            parts.append(padWithFigureSpaces(String(format: "%.1fGB", metrics.memoryUsedGB), toLength: 7, figureSpace: figureSpace))
         }
 
         if settings.showCPUInStatusBar {
             let cpuUsage = max(metrics.eCoreUsage, metrics.pCoreUsage)
-            if cpuUsage > 0 {
-                parts.append(String(format: "CPU %.0f%%", cpuUsage))
-            }
+            parts.append("CPU" + padWithFigureSpaces(String(format: "%.0f%%", cpuUsage), toLength: 4, figureSpace: figureSpace))
         }
 
-        if settings.showGPUInStatusBar && metrics.gpuUsage > 0 {
-            parts.append(String(format: "GPU %.0f%%", metrics.gpuUsage))
+        if settings.showGPUInStatusBar {
+            parts.append("GPU" + padWithFigureSpaces(String(format: "%.0f%%", metrics.gpuUsage), toLength: 4, figureSpace: figureSpace))
         }
 
         if parts.isEmpty {
-            button.title = ""
+            button.attributedTitle = NSAttributedString(string: "")
         } else {
-            button.title = " " + parts.joined(separator: " | ")
+            let text = " " + parts.joined(separator: " | ")
+            // Use monospaced digits to keep consistent width as numbers change
+            let font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+            let attributes: [NSAttributedString.Key: Any] = [.font: font]
+            button.attributedTitle = NSAttributedString(string: text, attributes: attributes)
         }
+    }
+
+    private func padWithFigureSpaces(_ string: String, toLength length: Int, figureSpace: String) -> String {
+        let padding = length - string.count
+        if padding > 0 {
+            return String(repeating: figureSpace, count: padding) + string
+        }
+        return string
     }
 }
