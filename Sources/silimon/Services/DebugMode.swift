@@ -23,6 +23,8 @@ func runDebugMode() {
     debugPrint("Initializing IOReport...")
     if ioReportService.initialize() {
         debugPrint("[OK] IOReport initialized successfully")
+        // Print debug info about frequency tables
+        debugPrintChannels()
     } else {
         debugPrint("[FAIL] IOReport failed to initialize - power metrics will not be available")
     }

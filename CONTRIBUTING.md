@@ -39,6 +39,24 @@ Thanks for your interest in contributing to Silimon! This document outlines how 
 | `make clean` | Clean build artifacts |
 | `make install` | Install to /usr/local/bin |
 
+### Testing
+
+**Unit Tests:**
+```bash
+# Run unit tests (requires Xcode, not just Command Line Tools)
+swift test
+```
+
+Tests run automatically in CI via GitHub Actions on every push.
+
+**Manual Validation:**
+```bash
+# Debug mode prints all collected metrics to console
+silimon --debug
+```
+
+Debug mode is useful for validating that metrics are being collected correctly.
+
 ## Project Structure
 
 ```

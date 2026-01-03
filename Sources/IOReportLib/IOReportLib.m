@@ -62,6 +62,7 @@ static void loadFrequencyTables(void) {
 
     if (entry != MACH_PORT_NULL) {
         // E-cluster frequencies
+        // Note: -sram properties store frequency in kHz, not Hz
         CFDataRef eClusterData = IORegistryEntryCreateCFProperty(entry,
             CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0);
         if (eClusterData) {
@@ -72,12 +73,13 @@ static void loadFrequencyTables(void) {
             for (int i = 0; i < eClusterFreqCount; i++) {
                 uint32_t freq;
                 memcpy(&freq, bytes + i * 8, 4);
-                eClusterFreqs[i] = freq / 1000000;  // Hz to MHz
+                eClusterFreqs[i] = freq / 1000;  // kHz to MHz
             }
             CFRelease(eClusterData);
         }
 
         // P-cluster frequencies
+        // Note: -sram properties store frequency in kHz, not Hz
         CFDataRef pClusterData = IORegistryEntryCreateCFProperty(entry,
             CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0);
         if (pClusterData) {
@@ -88,7 +90,7 @@ static void loadFrequencyTables(void) {
             for (int i = 0; i < pClusterFreqCount; i++) {
                 uint32_t freq;
                 memcpy(&freq, bytes + i * 8, 4);
-                pClusterFreqs[i] = freq / 1000000;
+                pClusterFreqs[i] = freq / 1000;  // kHz to MHz
             }
             CFRelease(pClusterData);
         }
@@ -459,9 +461,28 @@ void cleanupIOReport(void) {
 
 void debugPrintChannels(void) {
     fprintf(stderr, "\n=== IOReport Debug ===\n");
+
+    fprintf(stderr, "E-cluster freq table count: %d\n", eClusterFreqCount);
+    if (eClusterFreqs && eClusterFreqCount > 0) {
+        fprintf(stderr, "E-cluster frequencies (MHz): ");
+        for (int i = 0; i < eClusterFreqCount && i < 15; i++) {
+            fprintf(stderr, "%d ", eClusterFreqs[i]);
+        }
+        fprintf(stderr, "\n");
+    }
+
+    fprintf(stderr, "P-cluster freq table count: %d\n", pClusterFreqCount);
+    if (pClusterFreqs && pClusterFreqCount > 0) {
+        fprintf(stderr, "P-cluster frequencies (MHz): ");
+        for (int i = 0; i < pClusterFreqCount && i < 15; i++) {
+            fprintf(stderr, "%d ", pClusterFreqs[i]);
+        }
+        fprintf(stderr, "\n");
+    }
+
     fprintf(stderr, "GPU freq table count: %d\n", gpuFreqCount);
     if (gpuFreqs && gpuFreqCount > 0) {
-        fprintf(stderr, "GPU frequencies: ");
+        fprintf(stderr, "GPU frequencies (MHz): ");
         for (int i = 0; i < gpuFreqCount && i < 10; i++) {
             fprintf(stderr, "%d ", gpuFreqs[i]);
         }
