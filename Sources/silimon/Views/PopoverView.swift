@@ -7,6 +7,7 @@ struct PopoverView: View {
     @ObservedObject var updateChecker: UpdateChecker
     @State private var isSettingsMode = false
     @State private var draggedMetric: MetricType?
+    @State private var showDiagnostics = false
     var onSettingsChanged: () -> Void
 
     var body: some View {
@@ -197,7 +198,7 @@ struct PopoverView: View {
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(10)
 
-            // Action buttons
+            // Action buttons row 1
             HStack(spacing: 8) {
                 Button(action: {
                     if let url = URL(string: "https://github.com/odfalik/silimon") {
@@ -231,21 +232,37 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.bordered)
 
-                Button(action: { NSApp.terminate(nil) }) {
+                Button(action: { showDiagnostics = true }) {
                     HStack(spacing: 4) {
-                        Image(systemName: "xmark.circle.fill")
+                        Image(systemName: "stethoscope")
                             .font(.caption)
-                        Text("Quit")
+                        Text("Diagnose")
                             .font(.caption)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
+                .buttonStyle(.bordered)
             }
+
+            // Action buttons row 2
+            Button(action: { NSApp.terminate(nil) }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.caption)
+                    Text("Quit")
+                        .font(.caption)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
         }
         .padding(.top, 4)
+        .sheet(isPresented: $showDiagnostics) {
+            DiagnosticsView()
+        }
     }
 
     // MARK: - Star Prompt Banner
