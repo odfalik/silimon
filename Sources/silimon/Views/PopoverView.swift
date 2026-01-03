@@ -76,6 +76,13 @@ struct PopoverView: View {
                 .font(.headline)
                 .fontWeight(.semibold)
 
+            if isSettingsMode {
+                Text("v\(version)")
+                    .font(.subheadline)
+                    .fontWeight(.light)
+                    .foregroundColor(.secondary)
+            }
+
             if updateChecker.updateAvailable {
                 Text("v\(updateChecker.latestVersion ?? "")")
                     .font(.caption2)

@@ -9,6 +9,10 @@ struct MetricRowView: View {
     let isSettingsMode: Bool
     var onSettingsChanged: () -> Void
 
+    @State private var pingScale: CGFloat = 0
+    @State private var pingOpacity: Double = 0
+    @State private var lastSampleCount: Int = 0
+
     private var color: Color {
         switch metric {
         case .power: return .orange
@@ -42,7 +46,12 @@ struct MetricRowView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(
+            ZStack {
+                Color(NSColor.controlBackgroundColor)
+                dangerColor.opacity(dangerLevel * 0.06)
+            }
+        )
         .cornerRadius(10)
         .animation(.easeInOut(duration: 0.2), value: isSettingsMode)
     }
@@ -248,7 +257,7 @@ struct MetricRowView: View {
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
             } else {
-                Text(metrics.batteryIsCharging ? "Charging..." : "Calculating...")
+                Text(batteryStatusText)
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
             }
@@ -285,22 +294,107 @@ struct MetricRowView: View {
         }
     }
 
+    private var batteryStatusText: String {
+        if metrics.batteryLevel >= 99 {
+            return metrics.batteryIsCharging ? "Full" : "Full"
+        } else if metrics.batteryIsCharging {
+            return "Charging..."
+        } else {
+            return "Calculating..."
+        }
+    }
+
     // MARK: - Chart View with Fade
 
     private var chartView: some View {
         GeometryReader { geometry in
-            chartContent
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .mask(
-                    LinearGradient(
-                        gradient: Gradient(stops: [
-                            .init(color: .clear, location: 0),
-                            .init(color: .black, location: 0.2)
-                        ]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
+            ZStack {
+                chartContent
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .chartOverlay { proxy in
+                        GeometryReader { overlayGeometry in
+                            // Ping effect at the latest data point
+                            if let lastSample = history.samples.last,
+                               let xPos = proxy.position(forX: lastSample.timestamp),
+                               let yPos = proxy.position(forY: chartValue(for: lastSample)) {
+                                Circle()
+                                    .fill(color.opacity(pingOpacity))
+                                    .frame(width: 6, height: 6)
+                                    .scaleEffect(pingScale)
+                                    .position(x: xPos, y: yPos)
+                            }
+                        }
+                    }
+            }
+            .mask(
+                LinearGradient(
+                    gradient: Gradient(stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .black, location: 0.2)
+                    ]),
+                    startPoint: .leading,
+                    endPoint: .trailing
                 )
+            )
+            .onChange(of: history.samples.count) { newCount in
+                if newCount > lastSampleCount {
+                    triggerPing()
+                }
+                lastSampleCount = newCount
+            }
+        }
+    }
+
+    /// Returns 0-1 indicating how "stressed" this metric is
+    private var dangerLevel: Double {
+        switch metric {
+        case .memory:
+            // Memory: concern starts at 75%, danger at 90%+
+            let usage = metrics.memoryUsagePercent
+            if usage < 75 { return 0 }
+            return min(1, (usage - 75) / 25)
+        case .cpu:
+            // CPU: only concerned at very high sustained usage
+            let usage = metrics.combinedCpuUsage
+            if usage < 85 { return 0 }
+            return min(1, (usage - 85) / 15)
+        case .battery:
+            // Battery: danger when LOW
+            let level = metrics.batteryLevel
+            if level > 25 { return 0 }
+            return min(1, (25 - level) / 25)
+        case .power:
+            // Power: warm glow at high wattage (>35W)
+            let power = metrics.packagePower
+            if power < 35 { return 0 }
+            return min(1, (power - 35) / 15) * 0.6 // reduced intensity
+        case .gpu:
+            // GPU: not really a concern
+            return 0
+        }
+    }
+
+    private var dangerColor: Color {
+        switch metric {
+        case .battery:
+            return .red
+        case .memory:
+            return .red
+        case .cpu:
+            return .orange
+        case .power:
+            return .orange
+        case .gpu:
+            return .clear
+        }
+    }
+
+    private func triggerPing() {
+        pingScale = 1.0
+        pingOpacity = 0.5
+        withAnimation(.easeOut(duration: 0.4)) {
+            pingScale = 1.5
+            pingOpacity = 0
         }
     }
 
@@ -320,11 +414,66 @@ struct MetricRowView: View {
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
             .chartYScale(domain: chartDomain)
+            .chartBackground { proxy in
+                TimelineView(.animation) { timeline in
+                    GeometryReader { geometry in
+                        gridBackground(in: geometry.size, at: timeline.date)
+                    }
+                }
+            }
         } else {
             // Placeholder when no data
             Rectangle()
                 .fill(Color.clear)
         }
+    }
+
+    private func gridBackground(in size: CGSize, at date: Date) -> some View {
+        let horizontalLines = 3
+        let columnInterval: TimeInterval = 15 // seconds
+        let offset = date.timeIntervalSince1970.truncatingRemainder(dividingBy: columnInterval)
+        let normalizedOffset = CGFloat(offset / columnInterval)
+
+        return Canvas { context, canvasSize in
+            let gridColor = Color.primary.opacity(0.08)
+
+            // Horizontal lines (4 rows = 5 sections, so 4 internal lines)
+            for i in 1...horizontalLines {
+                let y = canvasSize.height * CGFloat(i) / CGFloat(horizontalLines + 1)
+                var path = Path()
+                path.move(to: CGPoint(x: 0, y: y))
+                path.addLine(to: CGPoint(x: canvasSize.width, y: y))
+                context.stroke(path, with: .color(gridColor), lineWidth: 0.5)
+            }
+
+            // Vertical lines sliding with time (5 second intervals over 60 seconds = 12 columns)
+            let totalDuration: TimeInterval = 60
+            let columnCount = Int(totalDuration / columnInterval)
+            let columnWidth = canvasSize.width / CGFloat(columnCount)
+
+            for i in 0...columnCount {
+                let baseX = canvasSize.width - CGFloat(i) * columnWidth
+                let x = baseX + normalizedOffset * columnWidth
+                if x >= 0 && x <= canvasSize.width {
+                    var path = Path()
+                    path.move(to: CGPoint(x: x, y: 0))
+                    path.addLine(to: CGPoint(x: x, y: canvasSize.height))
+                    context.stroke(path, with: .color(gridColor), lineWidth: 0.5)
+                }
+            }
+        }
+        .mask(
+            LinearGradient(
+                gradient: Gradient(stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: .black, location: 0.15),
+                    .init(color: .black, location: 0.85),
+                    .init(color: .clear, location: 1)
+                ]),
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        )
     }
 
     private func chartValue(for sample: Metrics) -> Double {
