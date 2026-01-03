@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-let version = "0.4.2"
+let version = "0.4.3"
 
 // Handle command line arguments
 let args = CommandLine.arguments
@@ -56,6 +56,9 @@ if !args.contains("--foreground") {
 
     do {
         try process.run()
+        // Detach child from our process group so Ctrl+C won't kill it
+        let pid = process.processIdentifier
+        setpgid(pid, pid)
         exit(0)  // Parent exits, child continues in background
     } catch {
         fputs("Failed to launch background process: \(error)\n", stderr)
