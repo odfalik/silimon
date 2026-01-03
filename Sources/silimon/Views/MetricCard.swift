@@ -63,3 +63,29 @@ struct MetricBar: View {
         .frame(height: 4)
     }
 }
+
+struct PillToggle: View {
+    let label: String
+    let isOn: Bool
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(isOn ? .white : .secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isOn ? color : Color.clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(isOn ? Color.clear : Color.secondary.opacity(0.3), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+}
