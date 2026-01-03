@@ -168,21 +168,18 @@ struct MetricRowView: View {
 
     private var chartView: some View {
         GeometryReader { geometry in
-            ZStack {
-                // Chart
-                chartContent
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                // Fade gradient overlay on left
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(NSColor.controlBackgroundColor),
-                        Color(NSColor.controlBackgroundColor).opacity(0)
-                    ]),
-                    startPoint: .leading,
-                    endPoint: UnitPoint(x: 0.15, y: 0.5)
+            chartContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .mask(
+                    LinearGradient(
+                        gradient: Gradient(stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .black, location: 0.2)
+                        ]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
                 )
-            }
         }
     }
 
@@ -232,7 +229,7 @@ struct MetricRowView: View {
             Spacer()
             HStack(spacing: 6) {
                 PillToggle(
-                    label: "Bar",
+                    label: "Menu Bar",
                     isOn: settings.isShownInBar(metric),
                     color: color
                 ) {

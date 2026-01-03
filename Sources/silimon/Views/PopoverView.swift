@@ -1,9 +1,11 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PopoverView: View {
     @ObservedObject var metricsCollector: MetricsCollector
     @ObservedObject var settings: Settings
     @State private var isSettingsMode = false
+    @State private var draggedMetric: MetricType?
     var onSettingsChanged: () -> Void
 
     var body: some View {
@@ -26,7 +28,18 @@ struct PopoverView: View {
                                 isSettingsMode: isSettingsMode,
                                 onSettingsChanged: onSettingsChanged
                             )
-                            .opacity(settings.isModuleEnabled(metric) ? 1.0 : 0.5)
+                            .opacity(draggedMetric == metric ? 0.5 : (settings.isModuleEnabled(metric) ? 1.0 : 0.5))
+                            .onDrag(isSettingsMode ? {
+                                draggedMetric = metric
+                                return NSItemProvider(object: metric.rawValue as NSString)
+                            } : {
+                                return NSItemProvider()
+                            })
+                            .onDrop(of: [.text], delegate: MetricDropDelegate(
+                                metric: metric,
+                                metrics: $settings.metricOrder,
+                                draggedMetric: $draggedMetric
+                            ))
                         }
                     }
 
@@ -190,5 +203,35 @@ struct PopoverView: View {
         case .fair: return .yellow
         case .serious: return .red
         }
+    }
+}
+
+// MARK: - Drop Delegate
+
+struct MetricDropDelegate: DropDelegate {
+    let metric: MetricType
+    @Binding var metrics: [MetricType]
+    @Binding var draggedMetric: MetricType?
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggedMetric = nil
+        return true
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard let draggedMetric = draggedMetric,
+              draggedMetric != metric,
+              let fromIndex = metrics.firstIndex(of: draggedMetric),
+              let toIndex = metrics.firstIndex(of: metric) else {
+            return
+        }
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            metrics.move(fromOffsets: IndexSet(integer: fromIndex), toOffset: toIndex > fromIndex ? toIndex + 1 : toIndex)
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
     }
 }
