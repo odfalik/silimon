@@ -1,7 +1,6 @@
 # Silimon
 
-<img width="259" height="28" alt="screenshot of menu bar" src="https://github.com/user-attachments/assets/526d54c4-6e50-4159-b8b0-1fb1d07a9ea0" />
-
+<img width="348" height="478" alt="demo screenshot" src="https://github.com/user-attachments/assets/6d42c7e4-9101-4628-b074-5bc688366b15" />
 
 A lightweight macOS menu bar app for monitoring Apple Silicon performance metrics.
 
