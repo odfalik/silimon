@@ -19,18 +19,18 @@ struct MetricRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 8) {
             // Drag handle (only in settings mode)
-            if isSettingsMode {
-                Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.secondary.opacity(0.5))
-                    .frame(width: 20)
-            }
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.secondary.opacity(0.5))
+                .frame(width: isSettingsMode ? 16 : 0)
+                .opacity(isSettingsMode ? 1 : 0)
+                .clipped()
 
             // Left side: stats
             statsView
-                .frame(width: isSettingsMode ? 80 : 100, alignment: .leading)
+                .frame(width: 90, alignment: .leading)
 
             // Right side: chart or settings pills
             if isSettingsMode {
@@ -43,6 +43,7 @@ struct MetricRowView: View {
         .padding(.vertical, 10)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(10)
+        .animation(.easeInOut(duration: 0.2), value: isSettingsMode)
     }
 
     // MARK: - Stats View
