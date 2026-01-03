@@ -1,27 +1,24 @@
 import SwiftUI
 import AppKit
 
-/// A view modifier that adds a native macOS tooltip using NSView
-struct TooltipModifier: ViewModifier {
+/// A wrapper view that adds a native macOS tooltip
+struct TooltipWrapper<Content: View>: NSViewRepresentable {
+    let content: Content
     let tooltip: String
 
-    func body(content: Content) -> some View {
-        content
-            .background(TooltipView(tooltip: tooltip))
-    }
-}
-
-/// NSViewRepresentable that sets the tooltip on the underlying NSView
-private struct TooltipView: NSViewRepresentable {
-    let tooltip: String
-
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        view.toolTip = tooltip
-        return view
+    init(_ tooltip: String, @ViewBuilder content: () -> Content) {
+        self.tooltip = tooltip
+        self.content = content()
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
+    func makeNSView(context: Context) -> NSHostingView<Content> {
+        let hostingView = NSHostingView(rootView: content)
+        hostingView.toolTip = tooltip
+        return hostingView
+    }
+
+    func updateNSView(_ nsView: NSHostingView<Content>, context: Context) {
+        nsView.rootView = content
         nsView.toolTip = tooltip
     }
 }
@@ -29,6 +26,6 @@ private struct TooltipView: NSViewRepresentable {
 extension View {
     /// Adds a native macOS tooltip that works in popovers
     func tooltip(_ text: String) -> some View {
-        modifier(TooltipModifier(tooltip: text))
+        TooltipWrapper(text) { self }
     }
 }
