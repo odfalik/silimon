@@ -31,7 +31,7 @@ struct MetricRowView: View {
 
             // Left side: stats
             statsView
-                .frame(width: 90, alignment: .leading)
+                .frame(width: 100, alignment: .leading)
 
             // Right side: chart or settings pills
             if isSettingsMode {
@@ -121,15 +121,13 @@ struct MetricRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            HStack(spacing: 4) {
-                Text(String(format: "%.1f / %.0f GB", metrics.memoryUsedGB, metrics.memoryTotalGB))
+            Text(String(format: "%.1f / %.0f GB", metrics.memoryUsedGB, metrics.memoryTotalGB))
+                .font(.system(size: 9))
+                .foregroundColor(.secondary)
+            if metrics.swapUsedGB > 0.01 {
+                Text(String(format: "Swap %.1f GB", metrics.swapUsedGB))
                     .font(.system(size: 9))
-                    .foregroundColor(.secondary)
-                if metrics.swapUsedGB > 0.01 {
-                    Text(String(format: "Swap %.1f", metrics.swapUsedGB))
-                        .font(.system(size: 9))
-                        .foregroundColor(.orange)
-                }
+                    .foregroundColor(.orange)
             }
         }
     }
@@ -166,7 +164,7 @@ struct MetricRowView: View {
                         .font(.system(size: 9))
                         .foregroundColor(.secondary)
                     if metrics.eCoreFrequencyMHz > 0 {
-                        Text(String(format: "%.0fMHz", metrics.eCoreFrequencyMHz))
+                        Text(String(format: "%.1fG", metrics.eCoreFrequencyMHz / 1000))
                             .font(.system(size: 9))
                             .foregroundColor(.secondary.opacity(0.7))
                     }
@@ -176,7 +174,7 @@ struct MetricRowView: View {
                         .font(.system(size: 9))
                         .foregroundColor(.secondary)
                     if metrics.pCoreFrequencyMHz > 0 {
-                        Text(String(format: "%.0fMHz", metrics.pCoreFrequencyMHz))
+                        Text(String(format: "%.1fG", metrics.pCoreFrequencyMHz / 1000))
                             .font(.system(size: 9))
                             .foregroundColor(.secondary.opacity(0.7))
                     }
