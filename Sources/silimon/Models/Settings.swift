@@ -1,6 +1,19 @@
 import Foundation
 import Combine
 
+/// Status bar display mode
+enum StatusBarMode: String, CaseIterable, Codable {
+    case text = "text"
+    case sparkline = "sparkline"
+
+    var displayName: String {
+        switch self {
+        case .text: return "Numbers"
+        case .sparkline: return "Graph"
+        }
+    }
+}
+
 /// Metric types that can be displayed
 enum MetricType: String, CaseIterable, Codable, Identifiable {
     case power
@@ -106,6 +119,12 @@ class Settings: ObservableObject {
             defaults.set(launchAtLogin, forKey: Keys.launchAtLogin)
             updateLaunchAgent()
         }
+    }
+
+    // MARK: - Status Bar Mode
+
+    @Published var statusBarMode: StatusBarMode {
+        didSet { defaults.set(statusBarMode.rawValue, forKey: Keys.statusBarMode) }
     }
 
     // MARK: - Metric Order
@@ -240,6 +259,7 @@ class Settings: ObservableObject {
         static let samplingInterval = "samplingInterval"
         static let launchAtLogin = "launchAtLogin"
         static let metricOrder = "metricOrder"
+        static let statusBarMode = "statusBarMode"
         static let firstLaunchDate = "firstLaunchDate"
         static let hasAskedToStarRepo = "hasAskedToStarRepo"
         static let launchCount = "launchCount"
@@ -261,7 +281,8 @@ class Settings: ObservableObject {
             Keys.powerModuleEnabled: true,
             Keys.batteryModuleEnabled: true,
             Keys.samplingInterval: 1.0,
-            Keys.launchAtLogin: false
+            Keys.launchAtLogin: false,
+            Keys.statusBarMode: StatusBarMode.text.rawValue
         ])
 
         // Load saved values
@@ -277,6 +298,12 @@ class Settings: ObservableObject {
         batteryModuleEnabled = defaults.bool(forKey: Keys.batteryModuleEnabled)
         samplingInterval = defaults.double(forKey: Keys.samplingInterval)
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
+        if let modeString = defaults.string(forKey: Keys.statusBarMode),
+           let mode = StatusBarMode(rawValue: modeString) {
+            statusBarMode = mode
+        } else {
+            statusBarMode = .text
+        }
 
         // Load star repo prompt tracking
         hasAskedToStarRepo = defaults.bool(forKey: Keys.hasAskedToStarRepo)

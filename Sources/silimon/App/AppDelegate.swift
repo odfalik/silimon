@@ -78,6 +78,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.updateStatusBar()
             }
             .store(in: &cancellables)
+
+        // Observe status bar mode changes
+        settings.$statusBarMode
+            .sink { [weak self] _ in
+                self?.updateStatusBar()
+            }
+            .store(in: &cancellables)
     }
 
     private func handleSettingsChanged() {
@@ -119,9 +126,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard statusItem.button != nil else { return }
 
         let metrics = metricsCollector.currentMetrics
+        let history = metricsCollector.history.samples
 
         // Update the custom status bar view
-        statusBarView.update(metrics: metrics)
+        statusBarView.update(metrics: metrics, history: history)
 
         // Position the status bar view
         statusBarView.frame.origin = .zero

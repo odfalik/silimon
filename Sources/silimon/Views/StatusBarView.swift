@@ -2,6 +2,7 @@ import AppKit
 
 class StatusBarView: NSView {
     private var metrics: Metrics = .empty
+    private var history: [Metrics] = []
     private var settings: Settings
 
     // Colors for each metric type
@@ -9,7 +10,7 @@ class StatusBarView: NSView {
     private let memoryColor = NSColor.systemPurple
     private let cpuColor = NSColor.systemBlue
     private let gpuColor = NSColor.systemGreen
-    private let batteryColor = NSColor.systemGreen
+    private let batteryColor = NSColor.systemYellow
 
     private let menuBarHeight: CGFloat = 22
     private let pillHeight: CGFloat = 16
@@ -19,6 +20,10 @@ class StatusBarView: NSView {
     private let textPadding: CGFloat = 6
     private let iconSize: CGFloat = 10
     private let iconTextSpacing: CGFloat = 3
+
+    // Sparkline dimensions
+    private let sparklineWidth: CGFloat = 80
+    private let sparklineHeight: CGFloat = 16
 
     init(settings: Settings) {
         self.settings = settings
@@ -30,30 +35,39 @@ class StatusBarView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func update(metrics: Metrics) {
+    func update(metrics: Metrics, history: [Metrics] = []) {
         self.metrics = metrics
+        self.history = history
         updateSize()
         needsDisplay = true
     }
 
     private func updateSize() {
-        let items = buildItems()
-        var totalWidth: CGFloat = pillPadding
+        var totalWidth: CGFloat
 
-        let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
+        if settings.statusBarMode == .sparkline {
+            // Sparkline mode: single compact area
+            totalWidth = pillPadding + sparklineWidth + pillPadding
+        } else {
+            // Text mode: pills with values
+            let items = buildItems()
+            totalWidth = pillPadding
 
-        for (index, item) in items.enumerated() {
-            let textWidth = (item.text as NSString).size(withAttributes: [.font: font]).width
-            // icon + spacing + text + padding on both sides
-            totalWidth += iconSize + iconTextSpacing + textWidth + textPadding * 2
-            if index < items.count - 1 {
-                totalWidth += pillSpacing
+            let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
+
+            for (index, item) in items.enumerated() {
+                let textWidth = (item.text as NSString).size(withAttributes: [.font: font]).width
+                // icon + spacing + text + padding on both sides
+                totalWidth += iconSize + iconTextSpacing + textWidth + textPadding * 2
+                if index < items.count - 1 {
+                    totalWidth += pillSpacing
+                }
             }
-        }
-        totalWidth += pillPadding
+            totalWidth += pillPadding
 
-        if items.isEmpty {
-            totalWidth = 0
+            if items.isEmpty {
+                totalWidth = 0
+            }
         }
 
         frame = NSRect(x: 0, y: 0, width: totalWidth, height: menuBarHeight)
@@ -126,6 +140,14 @@ class StatusBarView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 
+        if settings.statusBarMode == .sparkline {
+            drawSparklineMode()
+        } else {
+            drawTextMode()
+        }
+    }
+
+    private func drawTextMode() {
         let items = buildItems()
         guard !items.isEmpty else { return }
 
@@ -194,6 +216,60 @@ class StatusBarView: NSView {
 
             xOffset += pillWidth + pillSpacing
         }
+    }
+
+    private func drawSparklineMode() {
+        let isDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let yOffset: CGFloat = (bounds.height - sparklineHeight) / 2
+        let sparklineRect = NSRect(x: pillPadding, y: yOffset, width: sparklineWidth, height: sparklineHeight)
+
+        // Draw background
+        let bgColor = isDarkMode ? NSColor.white.withAlphaComponent(0.1) : NSColor.black.withAlphaComponent(0.08)
+        let bgPath = NSBezierPath(roundedRect: sparklineRect, xRadius: cornerRadius, yRadius: cornerRadius)
+        bgColor.setFill()
+        bgPath.fill()
+
+        // Clip to rounded rect for sparklines
+        NSGraphicsContext.saveGraphicsState()
+        bgPath.addClip()
+
+        // Draw each enabled metric as an overlaid sparkline
+        let metricsToShow: [(color: NSColor, values: [Double], maxValue: Double)] = [
+            (powerColor, history.map { $0.packagePower }, 100.0),  // Power normalized to 100W
+            (cpuColor, history.map { max($0.eCoreUsage, $0.pCoreUsage) }, 100.0),  // CPU %
+            (gpuColor, history.map { $0.gpuUsage }, 100.0),  // GPU %
+            (memoryColor, history.map { $0.memoryUsagePercent }, 100.0),  // Memory %
+        ]
+
+        let inset: CGFloat = 2
+        let drawRect = sparklineRect.insetBy(dx: inset, dy: inset)
+
+        for (color, values, maxValue) in metricsToShow {
+            guard !values.isEmpty else { continue }
+
+            let path = NSBezierPath()
+            path.lineWidth = 1.0
+
+            let pointCount = values.count
+            let xStep = drawRect.width / CGFloat(max(pointCount - 1, 1))
+
+            for (index, value) in values.enumerated() {
+                let normalizedValue = min(value / maxValue, 1.0)
+                let x = drawRect.minX + CGFloat(index) * xStep
+                let y = drawRect.minY + CGFloat(normalizedValue) * drawRect.height
+
+                if index == 0 {
+                    path.move(to: NSPoint(x: x, y: y))
+                } else {
+                    path.line(to: NSPoint(x: x, y: y))
+                }
+            }
+
+            color.withAlphaComponent(isDarkMode ? 0.9 : 0.7).setStroke()
+            path.stroke()
+        }
+
+        NSGraphicsContext.restoreGraphicsState()
     }
 }
 

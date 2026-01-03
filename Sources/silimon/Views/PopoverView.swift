@@ -177,6 +177,26 @@ struct PopoverView: View {
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(10)
 
+            // Status bar mode
+            HStack {
+                Image(systemName: "menubar.rectangle")
+                    .foregroundColor(.secondary)
+                    .frame(width: 16)
+                Text("Menu bar style")
+                    .font(.caption)
+                Spacer()
+                Picker("", selection: $settings.statusBarMode) {
+                    ForEach(StatusBarMode.allCases, id: \.self) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 120)
+            }
+            .padding(12)
+            .background(Color(NSColor.controlBackgroundColor))
+            .cornerRadius(10)
+
             // Action buttons
             HStack(spacing: 8) {
                 Button(action: {
