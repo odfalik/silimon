@@ -72,53 +72,50 @@ jobs:
           git clone https://x-access-token:${GH_TOKEN}@github.com/odfalik/homebrew-silimon.git
           cd homebrew-silimon
 
-          cat > Formula/silimon.rb << 'FORMULA_EOF'
-# Homebrew formula for Silimon
-# Auto-updated by GitHub Actions on new releases
-
-class Silimon < Formula
-  desc "Apple Silicon performance monitor for your menu bar"
-  homepage "https://github.com/odfalik/silimon"
-FORMULA_EOF
-
-          echo "  url \"https://github.com/odfalik/silimon/releases/download/${TAG}/silimon-${VERSION}-arm64.tar.gz\"" >> Formula/silimon.rb
-          echo "  sha256 \"${SHA256}\"" >> Formula/silimon.rb
-
-          cat >> Formula/silimon.rb << 'FORMULA_EOF'
-  license "MIT"
-
-  depends_on arch: :arm64
-  depends_on macos: :ventura
-
-  def install
-    bin.install "silimon"
-  end
-
-  def caveats
-    <<~EOS
-      Silimon monitors Apple Silicon performance metrics in your menu bar.
-
-      Features:
-        - Real-time power consumption (CPU, GPU, ANE)
-        - CPU cluster frequencies (E-cores vs P-cores)
-        - Memory usage and pressure
-        - GPU utilization
-        - Network throughput
-        - Battery status
-
-      No sudo required! Start silimon with:
-        silimon
-
-      If metrics aren't working, open Settings and click "Diagnose"
-      to run system diagnostics.
-    EOS
-  end
-
-  test do
-    assert_match "silimon", shell_output("#{bin}/silimon --version")
-  end
-end
-FORMULA_EOF
+          # Generate formula using echo to avoid heredoc YAML issues
+          {
+            echo '# Homebrew formula for Silimon'
+            echo '# Auto-updated by GitHub Actions on new releases'
+            echo ''
+            echo 'class Silimon < Formula'
+            echo '  desc "Apple Silicon performance monitor for your menu bar"'
+            echo '  homepage "https://github.com/odfalik/silimon"'
+            echo "  url \"https://github.com/odfalik/silimon/releases/download/${TAG}/silimon-${VERSION}-arm64.tar.gz\""
+            echo "  sha256 \"${SHA256}\""
+            echo '  license "MIT"'
+            echo ''
+            echo '  depends_on arch: :arm64'
+            echo '  depends_on macos: :ventura'
+            echo ''
+            echo '  def install'
+            echo '    bin.install "silimon"'
+            echo '  end'
+            echo ''
+            echo '  def caveats'
+            echo '    <<~EOS'
+            echo '      Silimon monitors Apple Silicon performance metrics in your menu bar.'
+            echo ''
+            echo '      Features:'
+            echo '        - Real-time power consumption (CPU, GPU, ANE)'
+            echo '        - CPU cluster frequencies (E-cores vs P-cores)'
+            echo '        - Memory usage and pressure'
+            echo '        - GPU utilization'
+            echo '        - Network throughput'
+            echo '        - Battery status'
+            echo ''
+            echo '      No sudo required! Start silimon with:'
+            echo '        silimon'
+            echo ''
+            echo '      If metrics are not working, open Settings and click "Diagnose"'
+            echo '      to run system diagnostics.'
+            echo '    EOS'
+            echo '  end'
+            echo ''
+            echo '  test do'
+            echo '    assert_match "silimon", shell_output("#{bin}/silimon --version")'
+            echo '  end'
+            echo 'end'
+          } > Formula/silimon.rb
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
