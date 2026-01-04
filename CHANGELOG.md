@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.11](https://github.com/odfalik/silimon/compare/v0.8.10...v0.8.11) (2026-01-04)
+
+
+### Bug Fixes
+
+* constrain stats width and remove excess height ([05823b2](https://github.com/odfalik/silimon/commit/05823b208a47b954b8c4e28bbce3c134c9c83cf6))
+
 ## [0.8.10](https://github.com/odfalik/silimon/compare/v0.8.9...v0.8.10) (2026-01-04)
 
 
