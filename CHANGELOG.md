@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.5](https://github.com/odfalik/silimon/compare/v0.8.4...v0.8.5) (2026-01-04)
+
+
+### Bug Fixes
+
+* align metric icons and titles consistently ([5f6aa09](https://github.com/odfalik/silimon/commit/5f6aa091c9536b14ea92b9de3208bb0298dee342))
+
 ## [0.8.4](https://github.com/odfalik/silimon/compare/v0.8.3...v0.8.4) (2026-01-04)
 
 
