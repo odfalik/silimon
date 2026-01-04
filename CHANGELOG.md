@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.6](https://github.com/odfalik/silimon/compare/v0.8.5...v0.8.6) (2026-01-04)
+
+
+### Bug Fixes
+
+* stabilize layout and popover positioning ([4be028a](https://github.com/odfalik/silimon/commit/4be028a0cd351c25356ffd77764e9007181f4312))
+
 ## [0.8.5](https://github.com/odfalik/silimon/compare/v0.8.4...v0.8.5) (2026-01-04)
 
 
