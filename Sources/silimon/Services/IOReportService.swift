@@ -6,6 +6,8 @@ import IOReportLib
 class IOReportService {
     private var isInitialized = false
     private let samplingDurationMs: Int32
+    private var consecutiveZeroSamples = 0
+    private let maxZeroSamplesBeforeReinit = 3
 
     init(samplingDurationMs: Int32 = 100) {
         self.samplingDurationMs = samplingDurationMs
@@ -18,9 +20,17 @@ class IOReportService {
 
         if initIOReport() {
             isInitialized = true
+            consecutiveZeroSamples = 0
             return true
         }
         return false
+    }
+
+    /// Force reinitialization of IOReport subscription
+    /// Call this if metrics become stale
+    func reinitialize() -> Bool {
+        cleanup()
+        return initialize()
     }
 
     /// Check if IOReport is available on this system
@@ -30,11 +40,48 @@ class IOReportService {
 
     /// Collect a single sample of metrics
     /// Returns nil if IOReport is not initialized or sampling fails
+    /// Auto-reinitializes if subscription becomes stale (all zeros)
     func sample() -> SampleResult? {
         guard isInitialized else { return nil }
 
         let metrics = sampleMetrics(samplingDurationMs)
         guard metrics.valid else { return nil }
+
+        // Detect stale subscription: all key metrics are zero
+        let isAllZeros = metrics.packagePower == 0 &&
+                         metrics.cpuPower == 0 &&
+                         metrics.gpuPower == 0 &&
+                         metrics.eCoreUsage == 0 &&
+                         metrics.pCoreUsage == 0
+
+        if isAllZeros {
+            consecutiveZeroSamples += 1
+
+            // After several consecutive zero samples, reinitialize
+            if consecutiveZeroSamples >= maxZeroSamplesBeforeReinit {
+                if reinitialize() {
+                    // Retry sample after reinit
+                    let retryMetrics = sampleMetrics(samplingDurationMs)
+                    if retryMetrics.valid {
+                        return SampleResult(
+                            cpuPower: retryMetrics.cpuPower,
+                            gpuPower: retryMetrics.gpuPower,
+                            anePower: retryMetrics.anePower,
+                            packagePower: retryMetrics.packagePower,
+                            eCoreUsage: retryMetrics.eCoreUsage,
+                            pCoreUsage: retryMetrics.pCoreUsage,
+                            eCoreFreqMHz: Double(retryMetrics.eCoreFreqMHz),
+                            pCoreFreqMHz: Double(retryMetrics.pCoreFreqMHz),
+                            gpuUsage: retryMetrics.gpuUsage,
+                            gpuFreqMHz: Double(retryMetrics.gpuFreqMHz),
+                            thermalPressure: ThermalPressure(rawValue: retryMetrics.thermalState)
+                        )
+                    }
+                }
+            }
+        } else {
+            consecutiveZeroSamples = 0
+        }
 
         return SampleResult(
             cpuPower: metrics.cpuPower,

@@ -145,7 +145,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Reposition popover if shown and width changed significantly
         if popover?.isShown == true && abs(oldWidth - newWidth) > 1 {
             // NSPopover can't update position dynamically - must close and reopen
-            DispatchQueue.main.async { [weak self] in
+            // Use delay to let macOS update the button's screen position first
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
                 guard let self = self,
                       let button = self.statusItem.button,
                       self.popover?.isShown == true else { return }
