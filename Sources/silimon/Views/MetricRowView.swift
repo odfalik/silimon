@@ -38,7 +38,7 @@ struct MetricRowView: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.vertical, 6)
         .background(
             ZStack {
                 Color(NSColor.controlBackgroundColor)
