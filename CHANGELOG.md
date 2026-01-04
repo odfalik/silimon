@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.7](https://github.com/odfalik/silimon/compare/v0.8.6...v0.8.7) (2026-01-04)
+
+
+### Bug Fixes
+
+* prevent layout shift in metric stats ([c80cec7](https://github.com/odfalik/silimon/commit/c80cec7680aa7d20d8f2571fe8b96a3a6f466a83))
+
 ## [0.8.6](https://github.com/odfalik/silimon/compare/v0.8.5...v0.8.6) (2026-01-04)
 
 
