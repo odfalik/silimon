@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.14](https://github.com/odfalik/silimon/compare/v0.8.13...v0.8.14) (2026-01-04)
+
+
+### Bug Fixes
+
+* rewrite metric row layout for proper sizing ([d582d8d](https://github.com/odfalik/silimon/commit/d582d8de18fffabafe4161e81f8fce50b69a7164))
+
 ## [0.8.13](https://github.com/odfalik/silimon/compare/v0.8.12...v0.8.13) (2026-01-04)
 
 
