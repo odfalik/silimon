@@ -15,13 +15,14 @@ struct MetricRowView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // Drag handle (animates in/out)
-            Image(systemName: "line.3.horizontal")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.secondary.opacity(0.5))
-                .frame(width: isSettingsMode ? 28 : 0, alignment: .leading)
-                .opacity(isSettingsMode ? 1 : 0)
-                .clipped()
+            // Drag handle (only visible in settings mode)
+            if isSettingsMode {
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary.opacity(0.5))
+                    .frame(width: 28, alignment: .leading)
+                    .transition(.opacity.combined(with: .move(edge: .leading)))
+            }
 
             // Left side: stats
             statsView

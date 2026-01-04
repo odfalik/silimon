@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DiagnosticsView: View {
+    @ObservedObject var updateChecker: UpdateChecker
     @State private var report: DiagnosticReport?
     @State private var isRunning = false
     @State private var copied = false
@@ -39,17 +40,50 @@ struct DiagnosticsView: View {
                         // Summary
                         summarySection(report)
 
-                        // Copy button
-                        Button(action: { copyReport(report) }) {
-                            HStack {
-                                Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                                Text(copied ? "Copied!" : "Copy Report")
+                        // Action buttons
+                        HStack(spacing: 8) {
+                            Button(action: { copyReport(report) }) {
+                                HStack {
+                                    Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                                    Text(copied ? "Copied!" : "Copy Report")
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .buttonStyle(.bordered)
+                            .disabled(copied)
+
+                            Button(action: { updateChecker.checkForUpdates() }) {
+                                HStack {
+                                    if updateChecker.isChecking {
+                                        ProgressView()
+                                            .scaleEffect(0.6)
+                                    } else {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                    }
+                                    Text("Check Updates")
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(updateChecker.isChecking)
                         }
-                        .buttonStyle(.bordered)
-                        .disabled(copied)
+
+                        // Update status
+                        if updateChecker.updateAvailable, let version = updateChecker.latestVersion {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text("Update available: v\(version)")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                                Spacer()
+                            }
+                            .padding(10)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                        }
                     }
                     .padding()
                 }

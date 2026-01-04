@@ -392,7 +392,7 @@ struct PopoverView: View {
         }
         .padding(.top, 4)
         .sheet(isPresented: $showDiagnostics) {
-            DiagnosticsView()
+            DiagnosticsView(updateChecker: updateChecker)
         }
         .alert("Reset Settings?", isPresented: $showResetConfirm) {
             Button("Cancel", role: .cancel) { }
