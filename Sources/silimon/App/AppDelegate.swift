@@ -124,7 +124,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateStatusBar() {
-        guard statusItem.button != nil else { return }
+        guard let button = statusItem.button else { return }
 
         let metrics = metricsCollector.currentMetrics
         let history = metricsCollector.history.samples
@@ -135,7 +135,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Position the status bar view
         statusBarView.frame.origin = .zero
 
+        // Track if width changed
+        let oldWidth = statusItem.length
+        let newWidth = statusBarView.frame.width
+
         // Update the status item width to fit the custom view
-        statusItem.length = statusBarView.frame.width
+        statusItem.length = newWidth
+
+        // Reposition popover if shown and width changed
+        if popover?.isShown == true && oldWidth != newWidth {
+            popover.positioningRect = button.bounds
+        }
     }
 }
