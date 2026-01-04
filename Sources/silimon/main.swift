@@ -42,8 +42,24 @@ if args.contains("--debug") {
 
 // Daemonize unless --foreground flag is passed
 if !args.contains("--foreground") {
-    // Get path to self
-    guard let executablePath = args.first else {
+    // Get absolute path to self
+    let executablePath: String
+    if let arg0 = args.first {
+        if arg0.hasPrefix("/") {
+            // Already absolute
+            executablePath = arg0
+        } else if arg0.contains("/") {
+            // Relative path - resolve from cwd
+            executablePath = FileManager.default.currentDirectoryPath + "/" + arg0
+        } else {
+            // Just command name - find in PATH
+            let pathDirs = (ProcessInfo.processInfo.environment["PATH"] ?? "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin").split(separator: ":")
+            executablePath = pathDirs.compactMap { dir -> String? in
+                let fullPath = "\(dir)/\(arg0)"
+                return FileManager.default.isExecutableFile(atPath: fullPath) ? fullPath : nil
+            }.first ?? arg0
+        }
+    } else {
         fputs("Failed to get executable path\n", stderr)
         exit(1)
     }
