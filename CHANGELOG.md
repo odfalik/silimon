@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.4](https://github.com/odfalik/silimon/compare/v0.8.3...v0.8.4) (2026-01-04)
+
+
+### Features
+
+* add check for updates button in diagnostics view ([90a04e5](https://github.com/odfalik/silimon/commit/90a04e57295860010fe5d258d2cdfed969d654f2))
+* add one-click update button ([5dfef72](https://github.com/odfalik/silimon/commit/5dfef72625f373e7abcd37f1a4ab8e4c32503f77))
+
 ## [0.8.3](https://github.com/odfalik/silimon/compare/v0.8.2...v0.8.3) (2026-01-04)
 
 
