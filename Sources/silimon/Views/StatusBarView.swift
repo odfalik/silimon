@@ -272,8 +272,8 @@ class StatusBarView: NSView, NSAccessibilityGroup {
         let yOffset: CGFloat = (bounds.height - sparklineHeight) / 2
         let sparklineRect = NSRect(x: pillPadding, y: yOffset, width: sparklineWidth, height: sparklineHeight)
 
-        // Draw background
-        let bgColor = isDarkMode ? NSColor.white.withAlphaComponent(0.1) : NSColor.black.withAlphaComponent(0.08)
+        // Draw background - darker for better contrast with sparklines
+        let bgColor = isDarkMode ? NSColor.white.withAlphaComponent(0.18) : NSColor.black.withAlphaComponent(0.12)
         let bgPath = NSBezierPath(roundedRect: sparklineRect, xRadius: cornerRadius, yRadius: cornerRadius)
         bgColor.setFill()
         bgPath.fill()
