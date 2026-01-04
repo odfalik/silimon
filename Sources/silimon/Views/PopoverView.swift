@@ -481,7 +481,7 @@ struct PopoverView: View {
                     Text("Update Available: v\(updateChecker.latestVersion ?? "")")
                         .font(.caption)
                         .fontWeight(.medium)
-                    Text("Run `brew upgrade silimon` in your terminal")
+                    Text("Run `brew update && brew upgrade silimon`")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -492,7 +492,7 @@ struct PopoverView: View {
                 Button(action: {
                     // Copy command to clipboard
                     NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString("brew upgrade silimon", forType: .string)
+                    NSPasteboard.general.setString("brew update && brew upgrade silimon", forType: .string)
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "doc.on.doc")
