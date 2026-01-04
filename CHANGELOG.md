@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.3](https://github.com/odfalik/silimon/compare/v0.8.2...v0.8.3) (2026-01-04)
+
+
+### Bug Fixes
+
+* update banner shows full brew update command ([7bc73ae](https://github.com/odfalik/silimon/commit/7bc73ae98f08fb7cc855d4a2cb29e591b5acff33))
+
 ## [0.8.2](https://github.com/odfalik/silimon/compare/v0.8.1...v0.8.2) (2026-01-04)
 
 
