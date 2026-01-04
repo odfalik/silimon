@@ -17,6 +17,8 @@ struct PopoverView: View {
     @State private var showExportOptions = false
     @State private var showResetConfirm = false
     @State private var showQuitConfirm = false
+    @State private var isUpdating = false
+    @State private var updateError: String?
     var onSettingsChanged: () -> Void
 
     var body: some View {
@@ -481,29 +483,42 @@ struct PopoverView: View {
                     Text("Update Available: v\(updateChecker.latestVersion ?? "")")
                         .font(.caption)
                         .fontWeight(.medium)
-                    Text("Run `brew update && brew upgrade silimon`")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                    if isUpdating {
+                        Text("Updating...")
+                            .font(.caption2)
+                            .foregroundColor(.blue)
+                    } else if let error = updateError {
+                        Text(error)
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                    } else {
+                        Text("Restart silimon to apply")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 Spacer()
             }
 
             HStack(spacing: 8) {
-                Button(action: {
-                    // Copy command to clipboard
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString("brew update && brew upgrade silimon", forType: .string)
-                }) {
+                Button(action: performUpdate) {
                     HStack(spacing: 4) {
-                        Image(systemName: "doc.on.doc")
-                            .font(.caption)
-                        Text("Copy")
+                        if isUpdating {
+                            ProgressView()
+                                .scaleEffect(0.6)
+                                .frame(width: 12, height: 12)
+                        } else {
+                            Image(systemName: "arrow.down.circle")
+                                .font(.caption)
+                        }
+                        Text(isUpdating ? "Updating..." : "Update Now")
                             .font(.caption)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .disabled(isUpdating)
 
                 if let url = updateChecker.releaseURL {
                     Button(action: {
@@ -512,7 +527,7 @@ struct PopoverView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "doc.text")
                                 .font(.caption)
-                            Text("Release Notes")
+                            Text("Notes")
                                 .font(.caption)
                         }
                         .frame(maxWidth: .infinity)
@@ -529,6 +544,68 @@ struct PopoverView: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.blue.opacity(0.3), lineWidth: 1)
         )
+    }
+
+    private func performUpdate() {
+        isUpdating = true
+        updateError = nil
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Find brew
+            let brewPaths = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
+            guard let brewPath = brewPaths.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
+                DispatchQueue.main.async {
+                    isUpdating = false
+                    updateError = "Homebrew not found"
+                }
+                return
+            }
+
+            // Run brew update && brew upgrade silimon
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/bash")
+            process.arguments = ["-c", "\(brewPath) update && \(brewPath) upgrade silimon"]
+
+            do {
+                try process.run()
+                process.waitUntilExit()
+
+                DispatchQueue.main.async {
+                    isUpdating = false
+                    if process.terminationStatus == 0 {
+                        // Relaunch silimon
+                        relaunchSilimon()
+                    } else {
+                        updateError = "Update failed (exit \(process.terminationStatus))"
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    isUpdating = false
+                    updateError = "Failed to run update"
+                }
+            }
+        }
+    }
+
+    private func relaunchSilimon() {
+        // Find the installed silimon
+        let silimonPaths = ["/opt/homebrew/bin/silimon", "/usr/local/bin/silimon"]
+        guard let silimonPath = silimonPaths.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
+            updateError = "Cannot find silimon to relaunch"
+            return
+        }
+
+        // Launch new instance (it will kill us)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: silimonPath)
+        process.arguments = []
+        try? process.run()
+
+        // Exit current instance
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            NSApp.terminate(nil)
+        }
     }
 
     // MARK: - Thermal Warning
