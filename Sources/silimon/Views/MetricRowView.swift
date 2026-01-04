@@ -15,20 +15,18 @@ struct MetricRowView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // Drag handle - only rendered in settings mode
+            // Drag handle overlay - positioned absolutely when in settings mode
             if isSettingsMode {
                 Image(systemName: "line.3.horizontal")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.secondary.opacity(0.5))
-                    .frame(width: 28)
+                    .frame(width: 20)
+                    .padding(.trailing, 8)
             }
 
-            // Left side: stats - use HStack+Spacer to force left alignment
-            HStack(spacing: 0) {
-                statsView
-                Spacer(minLength: 0)
-            }
-            .frame(width: 100)
+            // Left side: stats with fixed width
+            statsView
+                .frame(width: 100, alignment: .leading)
 
             // Right side: chart or settings pills
             if isSettingsMode {
@@ -96,6 +94,7 @@ struct MetricRowView: View {
                 PowerBreakdownItem(label: "ANE", value: metrics.anePower)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var memoryStats: some View {
@@ -134,6 +133,7 @@ struct MetricRowView: View {
                     .tooltip("Virtual memory on disk when RAM is full")
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var memoryPressureColor: Color {
@@ -191,6 +191,7 @@ struct MetricRowView: View {
                 .tooltip("Performance cores: high power, for demanding tasks")
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var gpuStats: some View {
@@ -223,6 +224,7 @@ struct MetricRowView: View {
                     .font(.system(size: 9))
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var batteryStats: some View {
@@ -265,6 +267,7 @@ struct MetricRowView: View {
                     .foregroundColor(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var batteryIcon: String {
@@ -342,6 +345,7 @@ struct MetricRowView: View {
                     .foregroundColor(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Chart View with Fade
