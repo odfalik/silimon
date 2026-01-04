@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.15](https://github.com/odfalik/silimon/compare/v0.8.14...v0.8.15) (2026-01-04)
+
+
+### Bug Fixes
+
+* improve IOReport stale subscription recovery and use core-count weighted CPU ([68834a6](https://github.com/odfalik/silimon/commit/68834a6451ced8d2be932865d0ac77faae844153))
+* improve popover layout and prevent metric truncation ([a56de60](https://github.com/odfalik/silimon/commit/a56de600d4042187d0330105700ba68764ca261d))
+
 ## [0.8.14](https://github.com/odfalik/silimon/compare/v0.8.13...v0.8.14) (2026-01-04)
 
 
