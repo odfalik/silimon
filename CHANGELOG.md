@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.12](https://github.com/odfalik/silimon/compare/v0.8.11...v0.8.12) (2026-01-04)
+
+
+### Features
+
+* darken sparkline background for better contrast ([2fa109d](https://github.com/odfalik/silimon/commit/2fa109de7e4b9e326f7945ada8813a473d882bf0))
+
 ## [0.8.11](https://github.com/odfalik/silimon/compare/v0.8.10...v0.8.11) (2026-01-04)
 
 
