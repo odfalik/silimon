@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.2](https://github.com/odfalik/silimon/compare/v0.8.1...v0.8.2) (2026-01-04)
+
+
+### Features
+
+* kill existing silimon instances on startup ([0be883a](https://github.com/odfalik/silimon/commit/0be883a64db60255c3f915ca13a983bd6eda26f5))
+
 ## [0.8.1](https://github.com/odfalik/silimon/compare/v0.8.0...v0.8.1) (2026-01-04)
 
 
