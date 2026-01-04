@@ -61,7 +61,7 @@ class StatusBarView: NSView, NSAccessibilityGroup {
 
     // Sparkline dimensions
     private let sparklineWidth: CGFloat = 80
-    private let sparklineHeight: CGFloat = 16
+    private let sparklineHeight: CGFloat = 22  // Full menu bar height
 
     init(settings: Settings) {
         self.settings = settings
@@ -297,8 +297,8 @@ class StatusBarView: NSView, NSAccessibilityGroup {
             (networkColor, history.map { $0.networkBytesInPerSec / 1024 / 1024 }, 10.0),  // Network MB/s (max 10)
         ]
 
-        let inset: CGFloat = 2
-        let drawRect = sparklineRect.insetBy(dx: inset, dy: inset)
+        let inset: CGFloat = 1
+        let drawRect = sparklineRect.insetBy(dx: inset, dy: 0)  // No vertical inset
 
         for (color, values, maxValue) in metricsToShow {
             guard !values.isEmpty else { continue }

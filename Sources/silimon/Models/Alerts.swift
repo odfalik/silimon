@@ -55,9 +55,16 @@ class AlertService: ObservableObject {
     private var lastAlertTimes: [MetricAlert.AlertType: Date] = [:]
     private let cooldownInterval: TimeInterval = 300  // 5 minutes between same alerts
 
+    /// Check if we're running as a proper app bundle (required for notifications)
+    private var canUseNotifications: Bool {
+        Bundle.main.bundleIdentifier != nil
+    }
+
     private init() {
         loadThresholds()
-        requestNotificationPermission()
+        if canUseNotifications {
+            requestNotificationPermission()
+        }
     }
 
     func checkMetrics(_ metrics: Metrics) {
@@ -122,6 +129,8 @@ class AlertService: ObservableObject {
     }
 
     private func sendNotification(_ alert: MetricAlert) {
+        guard canUseNotifications else { return }
+
         let content = UNMutableNotificationContent()
         content.title = "Silimon"
         content.body = alert.message
