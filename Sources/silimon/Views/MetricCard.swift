@@ -75,6 +75,8 @@ struct PillToggle: View {
             Text(label)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(isOn ? .white : .secondary)
+                .lineLimit(1)
+                .fixedSize()
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(

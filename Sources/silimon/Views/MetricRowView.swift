@@ -470,12 +470,7 @@ struct MetricRowView: View {
     private var settingsView: some View {
         HStack {
             Spacer()
-            HStack(spacing: 6) {
-                // Color picker (compact circle)
-                ColorPicker("", selection: settings.colorBinding(for: metric))
-                    .labelsHidden()
-                    .frame(width: 20, height: 20)
-
+            HStack(spacing: 8) {
                 PillToggle(
                     label: "Menu Bar",
                     isOn: settings.isShownInBar(metric),
@@ -492,8 +487,80 @@ struct MetricRowView: View {
                     settings.setModuleEnabled(metric, !settings.isModuleEnabled(metric))
                     onSettingsChanged()
                 }
+
+                // Compact color dot button
+                CompactColorPicker(color: settings.colorBinding(for: metric))
             }
         }
+    }
+}
+
+// MARK: - Compact Color Picker with Swatch Grid
+
+struct CompactColorPicker: View {
+    @Binding var color: Color
+    @State private var showPicker = false
+
+    // Curated color palette that works well for metrics
+    private static let colorSwatches: [[Color]] = [
+        // Row 1: Vibrant primaries
+        [.red, .orange, .yellow, .green, .mint, .cyan, .blue, .purple, .pink],
+        // Row 2: Softer/muted variants
+        [
+            Color(hue: 0.0, saturation: 0.6, brightness: 0.85),   // Soft red
+            Color(hue: 0.08, saturation: 0.7, brightness: 0.95),  // Soft orange
+            Color(hue: 0.15, saturation: 0.5, brightness: 0.95),  // Soft yellow
+            Color(hue: 0.35, saturation: 0.6, brightness: 0.75),  // Soft green
+            Color(hue: 0.45, saturation: 0.5, brightness: 0.85),  // Soft mint
+            Color(hue: 0.52, saturation: 0.6, brightness: 0.85),  // Soft cyan
+            Color(hue: 0.6, saturation: 0.6, brightness: 0.85),   // Soft blue
+            Color(hue: 0.75, saturation: 0.5, brightness: 0.85),  // Soft purple
+            Color(hue: 0.92, saturation: 0.5, brightness: 0.9),   // Soft pink
+        ]
+    ]
+
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: 14, height: 14)
+            .overlay(
+                Circle()
+                    .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
+            )
+            .onTapGesture { showPicker = true }
+            .popover(isPresented: $showPicker, arrowEdge: .bottom) {
+                VStack(spacing: 6) {
+                    ForEach(0..<Self.colorSwatches.count, id: \.self) { row in
+                        HStack(spacing: 6) {
+                            ForEach(0..<Self.colorSwatches[row].count, id: \.self) { col in
+                                let swatchColor = Self.colorSwatches[row][col]
+                                Circle()
+                                    .fill(swatchColor)
+                                    .frame(width: 20, height: 20)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(
+                                                isColorSelected(swatchColor) ? Color.primary : Color.primary.opacity(0.1),
+                                                lineWidth: isColorSelected(swatchColor) ? 2 : 1
+                                            )
+                                    )
+                                    .scaleEffect(isColorSelected(swatchColor) ? 1.1 : 1.0)
+                                    .onTapGesture {
+                                        color = swatchColor
+                                        showPicker = false
+                                    }
+                            }
+                        }
+                    }
+                }
+                .padding(10)
+            }
+            .help("Change color")
+    }
+
+    private func isColorSelected(_ swatch: Color) -> Bool {
+        // Compare colors by converting to hex
+        return swatch.toHex() == color.toHex()
     }
 }
 

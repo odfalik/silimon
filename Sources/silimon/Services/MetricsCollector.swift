@@ -65,6 +65,9 @@ class MetricsCollector: ObservableObject {
         isCollecting = true
         error = nil
 
+        // Update history duration from settings
+        history.maxDuration = settings.historyDuration
+
         // Initialize IOReport if needed for power/CPU/GPU metrics
         if settings.needsPowerMetrics {
             if !ioReportService.initialize() {

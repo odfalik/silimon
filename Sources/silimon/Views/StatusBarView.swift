@@ -282,9 +282,8 @@ class StatusBarView: NSView, NSAccessibilityGroup {
         NSGraphicsContext.saveGraphicsState()
         bgPath.addClip()
 
-        // Draw each enabled metric as an overlaid sparkline
-        // Uses shared ChartConfig for consistency with popover charts
-        let metricsToShow: [MetricType] = [.power, .cpu, .gpu, .memory, .network]
+        // Draw each enabled metric as an overlaid sparkline (respects menu bar toggle)
+        let metricsToShow = settings.metricOrder.filter { settings.isShownInBar($0) }
 
         let inset: CGFloat = 1
         let drawRect = sparklineRect.insetBy(dx: inset, dy: 0)  // No vertical inset

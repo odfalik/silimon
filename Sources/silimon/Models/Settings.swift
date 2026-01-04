@@ -31,9 +31,9 @@ enum SparklineWidth: String, CaseIterable, Codable {
 
     var pixels: CGFloat {
         switch self {
-        case .narrow: return 50
-        case .medium: return 80
-        case .wide: return 110
+        case .narrow: return 100
+        case .medium: return 160
+        case .wide: return 220
         }
     }
 }
@@ -180,6 +180,11 @@ class Settings: ObservableObject {
     /// Sampling interval in seconds (0.5 to 5.0)
     @Published var samplingInterval: Double {
         didSet { defaults.set(samplingInterval, forKey: Keys.samplingInterval) }
+    }
+
+    /// History duration in seconds (how much data to retain)
+    @Published var historyDuration: Double {
+        didSet { defaults.set(historyDuration, forKey: Keys.historyDuration) }
     }
 
     // MARK: - Startup Settings
@@ -396,6 +401,7 @@ class Settings: ObservableObject {
         static let batteryModuleEnabled = "batteryModuleEnabled"
         static let networkModuleEnabled = "networkModuleEnabled"
         static let samplingInterval = "samplingInterval"
+        static let historyDuration = "historyDuration"
         static let launchAtLogin = "launchAtLogin"
         static let metricOrder = "metricOrder"
         static let statusBarMode = "statusBarMode"
@@ -427,10 +433,10 @@ class Settings: ObservableObject {
     private init() {
         // Register defaults
         defaults.register(defaults: [
-            Keys.showPowerInStatusBar: true,
-            Keys.showMemoryInStatusBar: false,
-            Keys.showCPUInStatusBar: false,
-            Keys.showGPUInStatusBar: false,
+            Keys.showPowerInStatusBar: false,
+            Keys.showMemoryInStatusBar: true,
+            Keys.showCPUInStatusBar: true,
+            Keys.showGPUInStatusBar: true,
             Keys.showBatteryInStatusBar: false,
             Keys.gpuModuleEnabled: true,
             Keys.cpuModuleEnabled: true,
@@ -440,8 +446,10 @@ class Settings: ObservableObject {
             Keys.networkModuleEnabled: true,
             Keys.showNetworkInStatusBar: false,
             Keys.samplingInterval: 1.0,
+            Keys.historyDuration: 60.0,
             Keys.launchAtLogin: false,
-            Keys.statusBarMode: StatusBarMode.text.rawValue
+            Keys.statusBarMode: StatusBarMode.sparkline.rawValue,
+            Keys.sparklineWidth: SparklineWidth.medium.rawValue
         ])
 
         // Load saved values
@@ -458,12 +466,13 @@ class Settings: ObservableObject {
         batteryModuleEnabled = defaults.bool(forKey: Keys.batteryModuleEnabled)
         networkModuleEnabled = defaults.bool(forKey: Keys.networkModuleEnabled)
         samplingInterval = defaults.double(forKey: Keys.samplingInterval)
+        historyDuration = defaults.double(forKey: Keys.historyDuration)
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
         if let modeString = defaults.string(forKey: Keys.statusBarMode),
            let mode = StatusBarMode(rawValue: modeString) {
             statusBarMode = mode
         } else {
-            statusBarMode = .text
+            statusBarMode = .sparkline
         }
 
         // Load sparkline width
@@ -507,6 +516,11 @@ class Settings: ObservableObject {
         // Ensure sampling interval is within valid range
         if samplingInterval < 0.5 || samplingInterval > 5.0 {
             samplingInterval = 1.0
+        }
+
+        // Ensure history duration is within valid range
+        if historyDuration < 30 || historyDuration > 300 {
+            historyDuration = 60.0
         }
     }
 
@@ -573,5 +587,44 @@ class Settings: ObservableObject {
 
     private func removeLaunchAgent() {
         try? FileManager.default.removeItem(at: launchAgentURL)
+    }
+
+    // MARK: - Reset to Defaults
+
+    func resetToDefaults() {
+        // Status bar display (GPU, CPU, Memory in bar by default)
+        showPowerInStatusBar = false
+        showMemoryInStatusBar = true
+        showCPUInStatusBar = true
+        showGPUInStatusBar = true
+        showBatteryInStatusBar = false
+        showNetworkInStatusBar = false
+
+        // Module enabled (all in panel)
+        gpuModuleEnabled = true
+        cpuModuleEnabled = true
+        memoryModuleEnabled = true
+        powerModuleEnabled = true
+        batteryModuleEnabled = true
+        networkModuleEnabled = true
+
+        // Sampling
+        samplingInterval = 1.0
+        historyDuration = 60.0
+
+        // Display mode (graph mode, medium width)
+        statusBarMode = .sparkline
+        sparklineWidth = .medium
+
+        // Colors
+        powerColorHex = DefaultColors.power
+        cpuColorHex = DefaultColors.cpu
+        gpuColorHex = DefaultColors.gpu
+        memoryColorHex = DefaultColors.memory
+        networkColorHex = DefaultColors.network
+        batteryColorHex = DefaultColors.battery
+
+        // Metric order
+        metricOrder = MetricType.allCases.map { $0 }
     }
 }

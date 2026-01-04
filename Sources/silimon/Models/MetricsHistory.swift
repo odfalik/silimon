@@ -3,7 +3,11 @@ import Foundation
 /// Circular buffer for storing metrics history
 class MetricsHistory: ObservableObject {
     @Published private(set) var samples: [Metrics] = []
-    private let maxDuration: TimeInterval
+    var maxDuration: TimeInterval {
+        didSet {
+            trimOldSamples()
+        }
+    }
 
     init(maxDuration: TimeInterval = 60) {
         self.maxDuration = maxDuration

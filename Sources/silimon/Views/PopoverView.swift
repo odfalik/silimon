@@ -14,6 +14,8 @@ struct PopoverView: View {
     @State private var showAlertSettings = false
     @State private var showProcesses = false
     @State private var exportCopied = false
+    @State private var showResetConfirm = false
+    @State private var showQuitConfirm = false
     var onSettingsChanged: () -> Void
 
     var body: some View {
@@ -129,36 +131,58 @@ struct PopoverView: View {
 
     private var settingsControls: some View {
         VStack(spacing: 12) {
-            // Refresh rate
-            VStack(spacing: 6) {
-                HStack {
-                    Image(systemName: "timer")
-                        .foregroundColor(.secondary)
-                        .frame(width: 16)
-                    Text("Refresh rate")
-                        .font(.caption)
-                    Spacer()
-                    if metricsCollector.isLowPowerMode {
-                        Text(String(format: "%.1fs", metricsCollector.effectiveSamplingInterval))
+            // Refresh rate & History
+            VStack(spacing: 8) {
+                // Refresh rate
+                VStack(spacing: 4) {
+                    HStack {
+                        Image(systemName: "timer")
+                            .foregroundColor(.secondary)
+                            .frame(width: 16)
+                        Text("Refresh rate")
                             .font(.caption)
-                            .foregroundColor(.green)
-                            .monospacedDigit()
-                        Image(systemName: "leaf.fill")
-                            .font(.caption2)
-                            .foregroundColor(.green)
-                    } else {
-                        Text(String(format: "%.1fs", settings.samplingInterval))
+                        Spacer()
+                        if metricsCollector.isLowPowerMode {
+                            Text(String(format: "%.1fs", metricsCollector.effectiveSamplingInterval))
+                                .font(.caption)
+                                .foregroundColor(.green)
+                                .monospacedDigit()
+                            Image(systemName: "leaf.fill")
+                                .font(.caption2)
+                                .foregroundColor(.green)
+                        } else {
+                            Text(String(format: "%.1fs", settings.samplingInterval))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .monospacedDigit()
+                        }
+                    }
+
+                    Slider(value: $settings.samplingInterval, in: 0.5...5.0, step: 0.5)
+                        .onChange(of: settings.samplingInterval) { _ in onSettingsChanged() }
+                }
+
+                // History duration
+                VStack(spacing: 4) {
+                    HStack {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .foregroundColor(.secondary)
+                            .frame(width: 16)
+                        Text("History")
+                            .font(.caption)
+                        Spacer()
+                        Text(formatHistoryDuration(settings.historyDuration))
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .monospacedDigit()
                     }
+
+                    Slider(value: $settings.historyDuration, in: 30...300, step: 30)
+                        .onChange(of: settings.historyDuration) { _ in onSettingsChanged() }
                 }
 
-                Slider(value: $settings.samplingInterval, in: 0.5...5.0, step: 0.5)
-                    .onChange(of: settings.samplingInterval) { _ in onSettingsChanged() }
-
                 if metricsCollector.isLowPowerMode {
-                    Text("Reduced for Low Power Mode")
+                    Text("Refresh reduced for Low Power Mode")
                         .font(.caption2)
                         .foregroundColor(.green)
                 }
@@ -215,7 +239,7 @@ struct PopoverView: View {
                             }
                         }
                         .pickerStyle(.segmented)
-                        .frame(width: 160)
+                        .frame(width: 180)
                     }
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
@@ -295,10 +319,8 @@ struct PopoverView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                 }
-                .menuStyle(.borderlessButton)
-                .frame(maxWidth: .infinity)
-                .background(Color(NSColor.controlBackgroundColor))
-                .cornerRadius(6)
+                .menuStyle(.borderedButton)
+                .fixedSize(horizontal: false, vertical: true)
             }
 
             // Action buttons row 2
@@ -319,7 +341,19 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.bordered)
 
-                Button(action: { NSApp.terminate(nil) }) {
+                Button(action: { showResetConfirm = true }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.caption)
+                        Text("Reset")
+                            .font(.caption)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                }
+                .buttonStyle(.bordered)
+
+                Button(action: { showQuitConfirm = true }) {
                     HStack(spacing: 4) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.caption)
@@ -336,6 +370,23 @@ struct PopoverView: View {
         .padding(.top, 4)
         .sheet(isPresented: $showDiagnostics) {
             DiagnosticsView()
+        }
+        .alert("Reset Settings?", isPresented: $showResetConfirm) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                settings.resetToDefaults()
+                onSettingsChanged()
+            }
+        } message: {
+            Text("This will restore all settings to their defaults, including metric colors and display preferences.")
+        }
+        .alert("Quit Silimon?", isPresented: $showQuitConfirm) {
+            Button("Cancel", role: .cancel) { }
+            Button("Quit", role: .destructive) {
+                NSApp.terminate(nil)
+            }
+        } message: {
+            Text("Are you sure you want to quit Silimon?")
         }
     }
 
@@ -480,6 +531,18 @@ struct PopoverView: View {
         case .nominal: return .green
         case .fair: return .yellow
         case .serious: return .red
+        }
+    }
+
+    private func formatHistoryDuration(_ seconds: Double) -> String {
+        let mins = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        if mins > 0 && secs > 0 {
+            return "\(mins)m \(secs)s"
+        } else if mins > 0 {
+            return "\(mins)m"
+        } else {
+            return "\(secs)s"
         }
     }
 }

@@ -21,8 +21,9 @@ A simple, lightweight menu bar app that shows Apple Silicon metrics at a glance 
 - **Memory pressure** - Used memory, pressure state, and swap
 - **Network throughput** - Download and upload speeds
 - **Thermal state** - Current thermal pressure level
-- **History charts** - Sparkline trends for all metrics
-- **Menu bar graph mode** - Compact sparkline view in the menu bar
+- **History charts** - Sparkline trends for all metrics with configurable duration
+- **Menu bar graph mode** - Compact sparkline view with adjustable width
+- **Customizable colors** - Pick colors for each metric from a curated palette
 - **No sudo required** - Uses IOReport API for direct access to SoC metrics
 
 ## Installation
