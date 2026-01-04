@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.8](https://github.com/odfalik/silimon/compare/v0.8.7...v0.8.8) (2026-01-04)
+
+
+### Bug Fixes
+
+* auto-recover from stale IOReport subscription ([9bc61d7](https://github.com/odfalik/silimon/commit/9bc61d757678de4fc5f4d481dee35e315da2696a))
+* force left alignment on all stats views ([c9d3b95](https://github.com/odfalik/silimon/commit/c9d3b956a9292f5572872bdbb041545d1a8b7212))
+
 ## [0.8.7](https://github.com/odfalik/silimon/compare/v0.8.6...v0.8.7) (2026-01-04)
 
 
