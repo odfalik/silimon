@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.13](https://github.com/odfalik/silimon/compare/v0.8.12...v0.8.13) (2026-01-04)
+
+
+### Bug Fixes
+
+* fix power breakdown overflow in stats area ([4c1d18e](https://github.com/odfalik/silimon/commit/4c1d18e053923e4040c196cf876d0b8000e41dc5))
+* reduce metric row vertical padding ([c6217d1](https://github.com/odfalik/silimon/commit/c6217d1ba127541b9e81cb9d65994de9ebf7deb3))
+
 ## [0.8.12](https://github.com/odfalik/silimon/compare/v0.8.11...v0.8.12) (2026-01-04)
 
 
