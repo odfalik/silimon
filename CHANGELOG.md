@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.9](https://github.com/odfalik/silimon/compare/v0.8.8...v0.8.9) (2026-01-04)
+
+
+### Bug Fixes
+
+* prevent stats truncation with flexible layout ([1865b42](https://github.com/odfalik/silimon/commit/1865b4223222e70f605b0fcfab444a66d012fd29))
+
 ## [0.8.8](https://github.com/odfalik/silimon/compare/v0.8.7...v0.8.8) (2026-01-04)
 
 
