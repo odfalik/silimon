@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.1](https://github.com/odfalik/silimon/compare/v0.8.0...v0.8.1) (2026-01-04)
+
+
+### Bug Fixes
+
+* add explicit version to homebrew formula in CI ([e3a8de7](https://github.com/odfalik/silimon/commit/e3a8de7ecb50260ee0070e73fddd24f768971a31))
+* resolve executable path correctly for daemonization ([06bbdf6](https://github.com/odfalik/silimon/commit/06bbdf6d17d23ec0b41217df4bafda1408f4fc16))
+
 ## [0.8.0](https://github.com/odfalik/silimon/compare/v0.7.2...v0.8.0) (2026-01-03)
 
 
