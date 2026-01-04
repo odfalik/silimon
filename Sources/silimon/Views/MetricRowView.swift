@@ -24,9 +24,9 @@ struct MetricRowView: View {
                     .padding(.trailing, 8)
             }
 
-            // Left side: stats - gets sized FIRST (high priority)
+            // Left side: stats - fixed width to prevent truncation and overflow
             statsView
-                .layoutPriority(1)
+                .frame(width: 115, alignment: .leading)
 
             Spacer(minLength: 8)
 
@@ -348,7 +348,7 @@ struct MetricRowView: View {
 
     private var chartView: some View {
         chartContent
-            .frame(maxWidth: .infinity, minHeight: 50)
+            .frame(maxWidth: .infinity)
             .mask(
                 LinearGradient(
                     gradient: Gradient(stops: [
