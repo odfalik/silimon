@@ -14,6 +14,7 @@ struct PopoverView: View {
     @State private var showAlertSettings = false
     @State private var showProcesses = false
     @State private var exportCopied = false
+    @State private var showExportOptions = false
     @State private var showResetConfirm = false
     @State private var showQuitConfirm = false
     var onSettingsChanged: () -> Void
@@ -279,37 +280,7 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.bordered)
 
-                Menu {
-                    Button(action: {
-                        let csv = ExportService.shared.exportToCSV(Array(metricsCollector.history.samples))
-                        ExportService.shared.copyToClipboard(csv)
-                        exportCopied = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { exportCopied = false }
-                    }) {
-                        Label("Copy as CSV", systemImage: "doc.on.doc")
-                    }
-                    Button(action: {
-                        let json = ExportService.shared.exportToJSON(Array(metricsCollector.history.samples))
-                        ExportService.shared.copyToClipboard(json)
-                        exportCopied = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { exportCopied = false }
-                    }) {
-                        Label("Copy as JSON", systemImage: "doc.on.doc")
-                    }
-                    Divider()
-                    Button(action: {
-                        let csv = ExportService.shared.exportToCSV(Array(metricsCollector.history.samples))
-                        ExportService.shared.saveToFile(csv, defaultName: ExportService.shared.defaultFilename(format: "csv"), fileType: "csv")
-                    }) {
-                        Label("Save CSV...", systemImage: "square.and.arrow.down")
-                    }
-                    Button(action: {
-                        let json = ExportService.shared.exportToJSON(Array(metricsCollector.history.samples))
-                        ExportService.shared.saveToFile(json, defaultName: ExportService.shared.defaultFilename(format: "json"), fileType: "json")
-                    }) {
-                        Label("Save JSON...", systemImage: "square.and.arrow.down")
-                    }
-                } label: {
+                Button(action: { showExportOptions = true }) {
                     HStack(spacing: 4) {
                         Image(systemName: exportCopied ? "checkmark" : "square.and.arrow.up")
                             .font(.caption)
@@ -319,8 +290,58 @@ struct PopoverView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                 }
-                .menuStyle(.borderedButton)
-                .fixedSize(horizontal: false, vertical: true)
+                .buttonStyle(.bordered)
+                .popover(isPresented: $showExportOptions, arrowEdge: .bottom) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Button(action: {
+                            let csv = ExportService.shared.exportToCSV(Array(metricsCollector.history.samples))
+                            ExportService.shared.copyToClipboard(csv)
+                            exportCopied = true
+                            showExportOptions = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { exportCopied = false }
+                        }) {
+                            Label("Copy as CSV", systemImage: "doc.on.doc")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+
+                        Button(action: {
+                            let json = ExportService.shared.exportToJSON(Array(metricsCollector.history.samples))
+                            ExportService.shared.copyToClipboard(json)
+                            exportCopied = true
+                            showExportOptions = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { exportCopied = false }
+                        }) {
+                            Label("Copy as JSON", systemImage: "doc.on.doc")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+
+                        Divider()
+
+                        Button(action: {
+                            let csv = ExportService.shared.exportToCSV(Array(metricsCollector.history.samples))
+                            ExportService.shared.saveToFile(csv, defaultName: ExportService.shared.defaultFilename(format: "csv"), fileType: "csv")
+                            showExportOptions = false
+                        }) {
+                            Label("Save CSV...", systemImage: "square.and.arrow.down")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+
+                        Button(action: {
+                            let json = ExportService.shared.exportToJSON(Array(metricsCollector.history.samples))
+                            ExportService.shared.saveToFile(json, defaultName: ExportService.shared.defaultFilename(format: "json"), fileType: "json")
+                            showExportOptions = false
+                        }) {
+                            Label("Save JSON...", systemImage: "square.and.arrow.down")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(8)
+                    .frame(width: 150)
+                }
             }
 
             // Action buttons row 2
