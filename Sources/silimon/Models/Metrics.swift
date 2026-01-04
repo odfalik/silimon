@@ -82,3 +82,37 @@ enum ThermalPressure: String, CaseIterable {
         }
     }
 }
+
+// MARK: - Chart Configuration
+
+/// Shared chart configuration to ensure consistency between sparkline and popover charts
+enum ChartConfig {
+    /// Maximum Y-axis value for each metric type
+    static func maxValue(for metric: MetricType) -> Double {
+        switch metric {
+        case .power: return 50.0      // 0-50 Watts
+        case .cpu: return 100.0       // 0-100%
+        case .gpu: return 100.0       // 0-100%
+        case .memory: return 100.0    // 0-100%
+        case .network: return 10.0    // 0-10 MB/s
+        case .battery: return 100.0   // 0-100%
+        }
+    }
+
+    /// Extract the chart value from a Metrics sample for a given metric type
+    static func value(from sample: Metrics, for metric: MetricType) -> Double {
+        switch metric {
+        case .power: return sample.packagePower
+        case .cpu: return sample.combinedCpuUsage
+        case .gpu: return sample.gpuUsage
+        case .memory: return sample.memoryUsagePercent
+        case .network: return sample.networkBytesInPerSec / 1024 / 1024  // Convert to MB/s
+        case .battery: return sample.batteryLevel
+        }
+    }
+
+    /// Y-axis domain for SwiftUI Charts
+    static func chartDomain(for metric: MetricType) -> ClosedRange<Double> {
+        return 0...maxValue(for: metric)
+    }
+}

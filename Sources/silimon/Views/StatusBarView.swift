@@ -289,27 +289,30 @@ class StatusBarView: NSView, NSAccessibilityGroup {
         bgPath.addClip()
 
         // Draw each enabled metric as an overlaid sparkline
-        let metricsToShow: [(color: NSColor, values: [Double], maxValue: Double)] = [
-            (powerColor, history.map { $0.packagePower }, 100.0),  // Power normalized to 100W
-            (cpuColor, history.map { max($0.eCoreUsage, $0.pCoreUsage) }, 100.0),  // CPU %
-            (gpuColor, history.map { $0.gpuUsage }, 100.0),  // GPU %
-            (memoryColor, history.map { $0.memoryUsagePercent }, 100.0),  // Memory %
-            (networkColor, history.map { $0.networkBytesInPerSec / 1024 / 1024 }, 10.0),  // Network MB/s (max 10)
+        // Uses shared ChartConfig for consistency with popover charts
+        let metricsToShow: [(color: NSColor, metric: MetricType)] = [
+            (powerColor, .power),
+            (cpuColor, .cpu),
+            (gpuColor, .gpu),
+            (memoryColor, .memory),
+            (networkColor, .network),
         ]
 
         let inset: CGFloat = 1
         let drawRect = sparklineRect.insetBy(dx: inset, dy: 0)  // No vertical inset
 
-        for (color, values, maxValue) in metricsToShow {
-            guard !values.isEmpty else { continue }
+        for (color, metric) in metricsToShow {
+            guard !history.isEmpty else { continue }
 
+            let maxValue = ChartConfig.maxValue(for: metric)
             let path = NSBezierPath()
             path.lineWidth = 1.0
 
-            let pointCount = values.count
+            let pointCount = history.count
             let xStep = drawRect.width / CGFloat(max(pointCount - 1, 1))
 
-            for (index, value) in values.enumerated() {
+            for (index, sample) in history.enumerated() {
+                let value = ChartConfig.value(from: sample, for: metric)
                 let normalizedValue = min(value / maxValue, 1.0)
                 let x = drawRect.minX + CGFloat(index) * xStep
                 let y = drawRect.minY + CGFloat(normalizedValue) * drawRect.height

@@ -45,7 +45,7 @@ struct PopoverView: View {
                             MetricRowView(
                                 metric: metric,
                                 metrics: metricsCollector.currentMetrics,
-                                history: metricsCollector.history,
+                                samples: metricsCollector.history.samples,
                                 settings: settings,
                                 isSettingsMode: isSettingsMode,
                                 onSettingsChanged: onSettingsChanged

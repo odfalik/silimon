@@ -4,14 +4,11 @@ import Charts
 struct MetricRowView: View {
     let metric: MetricType
     let metrics: Metrics
-    @ObservedObject var history: MetricsHistory
+    let samples: [Metrics]  // Direct array instead of @ObservedObject
     @ObservedObject var settings: Settings
     let isSettingsMode: Bool
     var onSettingsChanged: () -> Void
 
-    @State private var pingScale: CGFloat = 0
-    @State private var pingOpacity: Double = 0
-    @State private var lastSampleCount: Int = 0
 
     private var color: Color {
         switch metric {
@@ -350,25 +347,7 @@ struct MetricRowView: View {
     // MARK: - Chart View with Fade
 
     private var chartView: some View {
-        GeometryReader { geometry in
-            ZStack {
-                chartContent
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .chartOverlay { proxy in
-                        GeometryReader { overlayGeometry in
-                            // Ping effect at the latest data point
-                            if let lastSample = history.samples.last,
-                               let xPos = proxy.position(forX: lastSample.timestamp),
-                               let yPos = proxy.position(forY: chartValue(for: lastSample)) {
-                                Circle()
-                                    .fill(color.opacity(pingOpacity))
-                                    .frame(width: 6, height: 6)
-                                    .scaleEffect(pingScale)
-                                    .position(x: xPos, y: yPos)
-                            }
-                        }
-                    }
-            }
+        chartContent
             .mask(
                 LinearGradient(
                     gradient: Gradient(stops: [
@@ -379,13 +358,6 @@ struct MetricRowView: View {
                     endPoint: .trailing
                 )
             )
-            .onChange(of: history.samples.count) { newCount in
-                if newCount > lastSampleCount {
-                    triggerPing()
-                }
-                lastSampleCount = newCount
-            }
-        }
     }
 
     /// Returns 0-1 indicating how "stressed" this metric is
@@ -435,23 +407,24 @@ struct MetricRowView: View {
         }
     }
 
-    private func triggerPing() {
-        pingScale = 1.0
-        pingOpacity = 0.5
-        withAnimation(.easeOut(duration: 0.4)) {
-            pingScale = 1.5
-            pingOpacity = 0
+    // Limit samples for chart performance (more points than pixels is wasteful)
+    private var chartSamples: [Metrics] {
+        let maxSamples = 60
+        if samples.count <= maxSamples {
+            return samples
         }
+        return Array(samples.suffix(maxSamples))
     }
 
     @ViewBuilder
     private var chartContent: some View {
-        if history.samples.count > 1 {
+        let displaySamples = chartSamples
+        if displaySamples.count > 1 {
             Chart {
-                ForEach(history.samples) { sample in
+                ForEach(displaySamples) { sample in
                     LineMark(
                         x: .value("Time", sample.timestamp),
-                        y: .value("Value", chartValue(for: sample))
+                        y: .value("Value", ChartConfig.value(from: sample, for: metric))
                     )
                     .foregroundStyle(color.opacity(0.8))
                     .lineStyle(StrokeStyle(lineWidth: 1.5))
@@ -459,12 +432,10 @@ struct MetricRowView: View {
             }
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
-            .chartYScale(domain: chartDomain)
+            .chartYScale(domain: ChartConfig.chartDomain(for: metric))
             .chartBackground { proxy in
-                TimelineView(.animation) { timeline in
-                    GeometryReader { geometry in
-                        gridBackground(in: geometry.size, at: timeline.date)
-                    }
+                GeometryReader { geometry in
+                    staticGridBackground(in: geometry.size)
                 }
             }
         } else {
@@ -474,16 +445,14 @@ struct MetricRowView: View {
         }
     }
 
-    private func gridBackground(in size: CGSize, at date: Date) -> some View {
+    private func staticGridBackground(in size: CGSize) -> some View {
         let horizontalLines = 3
-        let columnInterval: TimeInterval = 15 // seconds
-        let offset = date.timeIntervalSince1970.truncatingRemainder(dividingBy: columnInterval)
-        let normalizedOffset = CGFloat(offset / columnInterval)
+        let verticalLines = 4
 
         return Canvas { context, canvasSize in
             let gridColor = Color.primary.opacity(0.08)
 
-            // Horizontal lines (4 rows = 5 sections, so 4 internal lines)
+            // Horizontal lines
             for i in 1...horizontalLines {
                 let y = canvasSize.height * CGFloat(i) / CGFloat(horizontalLines + 1)
                 var path = Path()
@@ -492,52 +461,14 @@ struct MetricRowView: View {
                 context.stroke(path, with: .color(gridColor), lineWidth: 0.5)
             }
 
-            // Vertical lines sliding with time (5 second intervals over 60 seconds = 12 columns)
-            let totalDuration: TimeInterval = 60
-            let columnCount = Int(totalDuration / columnInterval)
-            let columnWidth = canvasSize.width / CGFloat(columnCount)
-
-            for i in 0...columnCount {
-                let baseX = canvasSize.width - CGFloat(i) * columnWidth
-                let x = baseX + normalizedOffset * columnWidth
-                if x >= 0 && x <= canvasSize.width {
-                    var path = Path()
-                    path.move(to: CGPoint(x: x, y: 0))
-                    path.addLine(to: CGPoint(x: x, y: canvasSize.height))
-                    context.stroke(path, with: .color(gridColor), lineWidth: 0.5)
-                }
+            // Vertical lines (static)
+            for i in 1...verticalLines {
+                let x = canvasSize.width * CGFloat(i) / CGFloat(verticalLines + 1)
+                var path = Path()
+                path.move(to: CGPoint(x: x, y: 0))
+                path.addLine(to: CGPoint(x: x, y: canvasSize.height))
+                context.stroke(path, with: .color(gridColor), lineWidth: 0.5)
             }
-        }
-        .mask(
-            LinearGradient(
-                gradient: Gradient(stops: [
-                    .init(color: .clear, location: 0),
-                    .init(color: .black, location: 0.15),
-                    .init(color: .black, location: 0.85),
-                    .init(color: .clear, location: 1)
-                ]),
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        )
-    }
-
-    private func chartValue(for sample: Metrics) -> Double {
-        switch metric {
-        case .power: return sample.packagePower
-        case .memory: return sample.memoryUsagePercent
-        case .cpu: return sample.combinedCpuUsage
-        case .gpu: return sample.gpuUsage
-        case .network: return sample.networkBytesInPerSec / 1024 / 1024 // MB/s
-        case .battery: return sample.batteryLevel
-        }
-    }
-
-    private var chartDomain: ClosedRange<Double> {
-        switch metric {
-        case .power: return 0...50
-        case .network: return 0...10 // 0-10 MB/s
-        case .memory, .cpu, .gpu, .battery: return 0...100
         }
     }
 
