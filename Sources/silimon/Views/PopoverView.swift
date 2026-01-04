@@ -185,24 +185,45 @@ struct PopoverView: View {
             .cornerRadius(10)
 
             // Status bar mode
-            HStack {
-                Image(systemName: "menubar.rectangle")
-                    .foregroundColor(.secondary)
-                    .frame(width: 16)
-                Text("Menu bar style")
-                    .font(.caption)
-                Spacer()
-                Picker("", selection: $settings.statusBarMode) {
-                    ForEach(StatusBarMode.allCases, id: \.self) { mode in
-                        Text(mode.displayName).tag(mode)
+            VStack(spacing: 8) {
+                HStack {
+                    Image(systemName: "menubar.rectangle")
+                        .foregroundColor(.secondary)
+                        .frame(width: 16)
+                    Text("Menu bar style")
+                        .font(.caption)
+                    Spacer()
+                    Picker("", selection: $settings.statusBarMode) {
+                        ForEach(StatusBarMode.allCases, id: \.self) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .frame(width: 120)
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 120)
+
+                // Width picker (only when graph mode)
+                if settings.statusBarMode == .sparkline {
+                    HStack {
+                        Text("Width")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Picker("", selection: $settings.sparklineWidth) {
+                            ForEach(SparklineWidth.allCases, id: \.self) { width in
+                                Text(width.displayName).tag(width)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 160)
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
             }
             .padding(12)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(10)
+            .animation(.easeInOut(duration: 0.2), value: settings.statusBarMode)
 
             // Action buttons row 1
             HStack(spacing: 8) {

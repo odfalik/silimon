@@ -42,14 +42,6 @@ class StatusBarView: NSView, NSAccessibilityGroup {
         return parts.isEmpty ? "No metrics displayed" : parts.joined(separator: ", ")
     }
 
-    // Colors for each metric type
-    private let powerColor = NSColor.systemOrange
-    private let memoryColor = NSColor.systemPurple
-    private let cpuColor = NSColor.systemBlue
-    private let gpuColor = NSColor.systemGreen
-    private let networkColor = NSColor.systemCyan
-    private let batteryColor = NSColor.systemYellow
-
     private let menuBarHeight: CGFloat = 22
     private let pillHeight: CGFloat = 16
     private let pillPadding: CGFloat = 4
@@ -60,7 +52,7 @@ class StatusBarView: NSView, NSAccessibilityGroup {
     private let iconTextSpacing: CGFloat = 3
 
     // Sparkline dimensions
-    private let sparklineWidth: CGFloat = 80
+    private var sparklineWidth: CGFloat { settings.sparklineWidth.pixels }
     private let sparklineHeight: CGFloat = 22  // Full menu bar height
 
     init(settings: Settings) {
@@ -145,27 +137,29 @@ class StatusBarView: NSView, NSAccessibilityGroup {
     }
 
     private func metricData(for metric: MetricType) -> (hasData: Bool, value: Double, fillPercent: Double, unit: String, icon: String, color: NSColor) {
+        let color = settings.nsColor(for: metric)
+
         switch metric {
         case .power:
             let hasData = metrics.packagePower > 0
             let fillPercent = hasData ? min(metrics.packagePower / 100.0, 1.0) : 0
-            return (hasData, metrics.packagePower, fillPercent, "W", "bolt.fill", powerColor)
+            return (hasData, metrics.packagePower, fillPercent, "W", "bolt.fill", color)
 
         case .memory:
             let hasData = metrics.memoryTotalGB > 0
             let fillPercent = hasData ? metrics.memoryUsagePercent / 100.0 : 0
-            return (hasData, metrics.memoryUsagePercent, fillPercent, "%", "memorychip", memoryColor)
+            return (hasData, metrics.memoryUsagePercent, fillPercent, "%", "memorychip", color)
 
         case .cpu:
             let cpuUsage = max(metrics.eCoreUsage, metrics.pCoreUsage)
             let hasData = metrics.eCoreFrequencyMHz > 0 || metrics.pCoreFrequencyMHz > 0 || cpuUsage > 0
             let fillPercent = hasData ? cpuUsage / 100.0 : 0
-            return (hasData, cpuUsage, fillPercent, "%", "cpu.fill", cpuColor)
+            return (hasData, cpuUsage, fillPercent, "%", "cpu.fill", color)
 
         case .gpu:
             let hasData = metrics.gpuFrequencyMHz > 0 || metrics.gpuUsage > 0
             let fillPercent = hasData ? metrics.gpuUsage / 100.0 : 0
-            return (hasData, metrics.gpuUsage, fillPercent, "%", "cpu", gpuColor)
+            return (hasData, metrics.gpuUsage, fillPercent, "%", "cpu", color)
 
         case .network:
             let totalBytesPerSec = metrics.networkBytesInPerSec + metrics.networkBytesOutPerSec
@@ -182,13 +176,13 @@ class StatusBarView: NSView, NSAccessibilityGroup {
             }
             // Fill based on 10 MB/s max
             let fillPercent = hasData ? min(metrics.networkBytesInPerSec / (10 * 1024 * 1024), 1.0) : 0
-            return (hasData, displayValue, fillPercent, unit, "arrow.down", networkColor)
+            return (hasData, displayValue, fillPercent, unit, "arrow.down", color)
 
         case .battery:
             let hasData = metrics.batteryLevel > 0
             let fillPercent = hasData ? metrics.batteryLevel / 100.0 : 0
             let icon = metrics.batteryIsCharging ? "battery.100.bolt" : "battery.100"
-            return (hasData, metrics.batteryLevel, fillPercent, "%", icon, batteryColor)
+            return (hasData, metrics.batteryLevel, fillPercent, "%", icon, color)
         }
     }
 
@@ -290,20 +284,15 @@ class StatusBarView: NSView, NSAccessibilityGroup {
 
         // Draw each enabled metric as an overlaid sparkline
         // Uses shared ChartConfig for consistency with popover charts
-        let metricsToShow: [(color: NSColor, metric: MetricType)] = [
-            (powerColor, .power),
-            (cpuColor, .cpu),
-            (gpuColor, .gpu),
-            (memoryColor, .memory),
-            (networkColor, .network),
-        ]
+        let metricsToShow: [MetricType] = [.power, .cpu, .gpu, .memory, .network]
 
         let inset: CGFloat = 1
         let drawRect = sparklineRect.insetBy(dx: inset, dy: 0)  // No vertical inset
 
-        for (color, metric) in metricsToShow {
+        for metric in metricsToShow {
             guard !history.isEmpty else { continue }
 
+            let color = settings.nsColor(for: metric)
             let maxValue = ChartConfig.maxValue(for: metric)
             let path = NSBezierPath()
             path.lineWidth = 1.0

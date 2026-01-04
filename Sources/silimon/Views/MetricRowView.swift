@@ -9,16 +9,8 @@ struct MetricRowView: View {
     let isSettingsMode: Bool
     var onSettingsChanged: () -> Void
 
-
     private var color: Color {
-        switch metric {
-        case .power: return .orange
-        case .memory: return .purple
-        case .cpu: return .blue
-        case .gpu: return .green
-        case .network: return .cyan
-        case .battery: return .green
-        }
+        settings.color(for: metric)
     }
 
     var body: some View {
@@ -347,17 +339,20 @@ struct MetricRowView: View {
     // MARK: - Chart View with Fade
 
     private var chartView: some View {
-        chartContent
-            .mask(
-                LinearGradient(
-                    gradient: Gradient(stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: 0.2)
-                    ]),
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
+        GeometryReader { _ in
+            chartContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .mask(
+            LinearGradient(
+                gradient: Gradient(stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: .black, location: 0.2)
+                ]),
+                startPoint: .leading,
+                endPoint: .trailing
             )
+        )
     }
 
     /// Returns 0-1 indicating how "stressed" this metric is
@@ -409,7 +404,7 @@ struct MetricRowView: View {
 
     // Limit samples for chart performance (more points than pixels is wasteful)
     private var chartSamples: [Metrics] {
-        let maxSamples = 60
+        let maxSamples = 30  // Reduced for better performance
         if samples.count <= maxSamples {
             return samples
         }
@@ -433,11 +428,10 @@ struct MetricRowView: View {
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
             .chartYScale(domain: ChartConfig.chartDomain(for: metric))
-            .chartBackground { proxy in
-                GeometryReader { geometry in
-                    staticGridBackground(in: geometry.size)
-                }
+            .chartBackground { _ in
+                staticGridBackground
             }
+            .drawingGroup()  // Flatten to Metal layer for better performance
         } else {
             // Placeholder when no data
             Rectangle()
@@ -445,28 +439,27 @@ struct MetricRowView: View {
         }
     }
 
-    private func staticGridBackground(in size: CGSize) -> some View {
-        let horizontalLines = 3
-        let verticalLines = 4
-
-        return Canvas { context, canvasSize in
+    private var staticGridBackground: some View {
+        Canvas { context, size in
             let gridColor = Color.primary.opacity(0.08)
+            let horizontalLines = 3
+            let verticalLines = 4
 
             // Horizontal lines
             for i in 1...horizontalLines {
-                let y = canvasSize.height * CGFloat(i) / CGFloat(horizontalLines + 1)
+                let y = size.height * CGFloat(i) / CGFloat(horizontalLines + 1)
                 var path = Path()
                 path.move(to: CGPoint(x: 0, y: y))
-                path.addLine(to: CGPoint(x: canvasSize.width, y: y))
+                path.addLine(to: CGPoint(x: size.width, y: y))
                 context.stroke(path, with: .color(gridColor), lineWidth: 0.5)
             }
 
-            // Vertical lines (static)
+            // Vertical lines
             for i in 1...verticalLines {
-                let x = canvasSize.width * CGFloat(i) / CGFloat(verticalLines + 1)
+                let x = size.width * CGFloat(i) / CGFloat(verticalLines + 1)
                 var path = Path()
                 path.move(to: CGPoint(x: x, y: 0))
-                path.addLine(to: CGPoint(x: x, y: canvasSize.height))
+                path.addLine(to: CGPoint(x: x, y: size.height))
                 context.stroke(path, with: .color(gridColor), lineWidth: 0.5)
             }
         }
@@ -478,6 +471,11 @@ struct MetricRowView: View {
         HStack {
             Spacer()
             HStack(spacing: 6) {
+                // Color picker (compact circle)
+                ColorPicker("", selection: settings.colorBinding(for: metric))
+                    .labelsHidden()
+                    .frame(width: 20, height: 20)
+
                 PillToggle(
                     label: "Menu Bar",
                     isOn: settings.isShownInBar(metric),

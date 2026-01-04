@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 /// Status bar display mode
 enum StatusBarMode: String, CaseIterable, Codable {
@@ -11,6 +12,63 @@ enum StatusBarMode: String, CaseIterable, Codable {
         case .text: return "Numbers"
         case .sparkline: return "Graph"
         }
+    }
+}
+
+/// Sparkline width options
+enum SparklineWidth: String, CaseIterable, Codable {
+    case narrow = "narrow"
+    case medium = "medium"
+    case wide = "wide"
+
+    var displayName: String {
+        switch self {
+        case .narrow: return "Narrow"
+        case .medium: return "Medium"
+        case .wide: return "Wide"
+        }
+    }
+
+    var pixels: CGFloat {
+        switch self {
+        case .narrow: return 50
+        case .medium: return 80
+        case .wide: return 110
+        }
+    }
+}
+
+// MARK: - Color Hex Extension
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let r, g, b: UInt64
+        switch hex.count {
+        case 6:
+            (r, g, b) = ((int >> 16) & 0xFF, (int >> 8) & 0xFF, int & 0xFF)
+        default:
+            (r, g, b) = (255, 255, 255)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: 1
+        )
+    }
+
+    func toHex() -> String {
+        guard let components = NSColor(self).usingColorSpace(.sRGB) else {
+            return "#FFFFFF"
+        }
+        let r = Int(components.redComponent * 255)
+        let g = Int(components.greenComponent * 255)
+        let b = Int(components.blueComponent * 255)
+        return String(format: "#%02X%02X%02X", r, g, b)
     }
 }
 
@@ -137,6 +195,69 @@ class Settings: ObservableObject {
 
     @Published var statusBarMode: StatusBarMode {
         didSet { defaults.set(statusBarMode.rawValue, forKey: Keys.statusBarMode) }
+    }
+
+    @Published var sparklineWidth: SparklineWidth {
+        didSet { defaults.set(sparklineWidth.rawValue, forKey: Keys.sparklineWidth) }
+    }
+
+    // MARK: - Metric Colors (stored as hex strings)
+
+    @Published var powerColorHex: String {
+        didSet { defaults.set(powerColorHex, forKey: Keys.powerColor) }
+    }
+    @Published var cpuColorHex: String {
+        didSet { defaults.set(cpuColorHex, forKey: Keys.cpuColor) }
+    }
+    @Published var gpuColorHex: String {
+        didSet { defaults.set(gpuColorHex, forKey: Keys.gpuColor) }
+    }
+    @Published var memoryColorHex: String {
+        didSet { defaults.set(memoryColorHex, forKey: Keys.memoryColor) }
+    }
+    @Published var networkColorHex: String {
+        didSet { defaults.set(networkColorHex, forKey: Keys.networkColor) }
+    }
+    @Published var batteryColorHex: String {
+        didSet { defaults.set(batteryColorHex, forKey: Keys.batteryColor) }
+    }
+
+    /// Get SwiftUI Color for a metric
+    func color(for metric: MetricType) -> Color {
+        switch metric {
+        case .power: return Color(hex: powerColorHex)
+        case .cpu: return Color(hex: cpuColorHex)
+        case .gpu: return Color(hex: gpuColorHex)
+        case .memory: return Color(hex: memoryColorHex)
+        case .network: return Color(hex: networkColorHex)
+        case .battery: return Color(hex: batteryColorHex)
+        }
+    }
+
+    /// Get NSColor for a metric (for StatusBarView)
+    func nsColor(for metric: MetricType) -> NSColor {
+        NSColor(color(for: metric))
+    }
+
+    /// Set color for a metric
+    func setColor(_ color: Color, for metric: MetricType) {
+        let hex = color.toHex()
+        switch metric {
+        case .power: powerColorHex = hex
+        case .cpu: cpuColorHex = hex
+        case .gpu: gpuColorHex = hex
+        case .memory: memoryColorHex = hex
+        case .network: networkColorHex = hex
+        case .battery: batteryColorHex = hex
+        }
+    }
+
+    /// Color binding for SwiftUI ColorPicker
+    func colorBinding(for metric: MetricType) -> Binding<Color> {
+        Binding(
+            get: { self.color(for: metric) },
+            set: { self.setColor($0, for: metric) }
+        )
     }
 
     // MARK: - Metric Order
@@ -278,9 +399,27 @@ class Settings: ObservableObject {
         static let launchAtLogin = "launchAtLogin"
         static let metricOrder = "metricOrder"
         static let statusBarMode = "statusBarMode"
+        static let sparklineWidth = "sparklineWidth"
         static let firstLaunchDate = "firstLaunchDate"
         static let hasAskedToStarRepo = "hasAskedToStarRepo"
         static let launchCount = "launchCount"
+        // Metric colors
+        static let powerColor = "color.power"
+        static let cpuColor = "color.cpu"
+        static let gpuColor = "color.gpu"
+        static let memoryColor = "color.memory"
+        static let networkColor = "color.network"
+        static let batteryColor = "color.battery"
+    }
+
+    // Default colors (hex)
+    private enum DefaultColors {
+        static let power = "#FF9500"    // orange
+        static let cpu = "#007AFF"      // blue
+        static let gpu = "#34C759"      // green
+        static let memory = "#AF52DE"   // purple
+        static let network = "#5AC8FA"  // cyan
+        static let battery = "#FFCC00"  // yellow
     }
 
     // MARK: - Initialization
@@ -326,6 +465,22 @@ class Settings: ObservableObject {
         } else {
             statusBarMode = .text
         }
+
+        // Load sparkline width
+        if let widthString = defaults.string(forKey: Keys.sparklineWidth),
+           let width = SparklineWidth(rawValue: widthString) {
+            sparklineWidth = width
+        } else {
+            sparklineWidth = .medium
+        }
+
+        // Load metric colors (with defaults)
+        powerColorHex = defaults.string(forKey: Keys.powerColor) ?? DefaultColors.power
+        cpuColorHex = defaults.string(forKey: Keys.cpuColor) ?? DefaultColors.cpu
+        gpuColorHex = defaults.string(forKey: Keys.gpuColor) ?? DefaultColors.gpu
+        memoryColorHex = defaults.string(forKey: Keys.memoryColor) ?? DefaultColors.memory
+        networkColorHex = defaults.string(forKey: Keys.networkColor) ?? DefaultColors.network
+        batteryColorHex = defaults.string(forKey: Keys.batteryColor) ?? DefaultColors.battery
 
         // Load star repo prompt tracking
         hasAskedToStarRepo = defaults.bool(forKey: Keys.hasAskedToStarRepo)
