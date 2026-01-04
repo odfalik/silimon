@@ -24,13 +24,13 @@ struct MetricRowView: View {
                     .padding(.trailing, 8)
             }
 
-            // Left side: stats - prevent truncation, align left
+            // Left side: stats - gets sized FIRST (high priority)
             statsView
-                .fixedSize(horizontal: true, vertical: false)
+                .layoutPriority(1)
 
             Spacer(minLength: 8)
 
-            // Right side: chart or settings pills
+            // Right side: chart or settings - fills remaining space (low priority)
             if isSettingsMode {
                 settingsView
             } else {
@@ -347,20 +347,18 @@ struct MetricRowView: View {
     // MARK: - Chart View with Fade
 
     private var chartView: some View {
-        GeometryReader { _ in
-            chartContent
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .mask(
-            LinearGradient(
-                gradient: Gradient(stops: [
-                    .init(color: .clear, location: 0),
-                    .init(color: .black, location: 0.2)
-                ]),
-                startPoint: .leading,
-                endPoint: .trailing
+        chartContent
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .mask(
+                LinearGradient(
+                    gradient: Gradient(stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .black, location: 0.2)
+                    ]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
             )
-        )
     }
 
     /// Returns 0-1 indicating how "stressed" this metric is
