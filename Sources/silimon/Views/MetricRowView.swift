@@ -25,6 +25,7 @@ struct MetricRowView: View {
 
             // Stats - sizes naturally to content, never truncates
             statsView
+                .fixedSize(horizontal: true, vertical: false)
 
             Spacer(minLength: 4)
 
@@ -32,13 +33,14 @@ struct MetricRowView: View {
             if isSettingsMode {
                 settingsView
             } else {
-                // Chart gets fixed width - stats get remaining space
+                // Chart gets fixed size appropriate for popover
+                // Note: sparklineWidth setting is for status bar, not popover
                 chartView
-                    .frame(width: settings.sparklineWidth.pixels)
+                    .frame(width: 120, height: 50)
             }
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.vertical, 5)
         .background(
             ZStack {
                 Color(NSColor.controlBackgroundColor)
@@ -576,7 +578,7 @@ private struct PowerBreakdownItem: View {
         Text("\(label) \(String(format: "%.1f", value))")
             .font(.system(size: 9).monospacedDigit())
             .foregroundColor(.secondary)
-            .frame(width: 35, alignment: .leading)
+            .fixedSize(horizontal: true, vertical: false)
     }
 }
 
