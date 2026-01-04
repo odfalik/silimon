@@ -65,9 +65,20 @@ Other prefixes (`chore:`, `docs:`, `refactor:`) don't trigger releases.
 
 ## DO NOT
 
-- Manually edit version numbers (let release-please handle it)
-- Create releases manually (merge the release PR instead)
-- Update the homebrew tap manually (CI does this)
+- **Manually edit version numbers** - release-please handles `.release-please-manifest.json` and `CHANGELOG.md`
+- **Manually create git tags** - release-please creates tags when its PR is merged
+- **Manually create GitHub releases** - release-please does this automatically
+- **Manually update the homebrew tap** - CI does this after release is created
+- **Manually build/upload binaries** - CI builds and uploads to the release
+
+If you bypass release-please by manually creating tags/releases, the `build-and-upload` and `update-homebrew` jobs won't run because they depend on `release_created` being true from release-please.
+
+## Correct Workflow
+
+1. Merge feature PR with conventional commits (`feat:`, `fix:`)
+2. **Wait** for release-please to create a PR titled "chore(main): release X.Y.Z"
+3. Review and merge that release PR
+4. Everything else is automatic (tag, release, binary, homebrew)
 
 ## Troubleshooting
 
