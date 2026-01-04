@@ -124,7 +124,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateStatusBar() {
-        guard let button = statusItem.button else { return }
+        guard statusItem.button != nil else { return }
 
         let metrics = metricsCollector.currentMetrics
         let history = metricsCollector.history.samples
@@ -142,9 +142,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Update the status item width to fit the custom view
         statusItem.length = newWidth
 
-        // Reposition popover if shown and width changed
-        if popover?.isShown == true && oldWidth != newWidth {
-            popover.positioningRect = button.bounds
+        // Reposition popover if shown and width changed significantly
+        if popover?.isShown == true && abs(oldWidth - newWidth) > 1 {
+            // NSPopover can't update position dynamically - must close and reopen
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self,
+                      let button = self.statusItem.button,
+                      self.popover?.isShown == true else { return }
+                let wasAnimating = self.popover.animates
+                self.popover.animates = false
+                self.popover.performClose(nil)
+                self.popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                self.popover.animates = wasAnimating
+            }
         }
     }
 }

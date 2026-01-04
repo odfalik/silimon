@@ -15,12 +15,13 @@ struct MetricRowView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // Drag handle (animates width, stays in hierarchy for stable layout)
+            // Drag handle (fixed width container, content fades)
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.secondary.opacity(0.5))
-                .frame(width: isSettingsMode ? 28 : 0, alignment: .leading)
+                .frame(width: 28, alignment: .leading)
                 .opacity(isSettingsMode ? 1 : 0)
+                .frame(width: isSettingsMode ? 28 : 0)
                 .clipped()
 
             // Left side: stats
@@ -43,7 +44,6 @@ struct MetricRowView: View {
             }
         )
         .cornerRadius(10)
-        .animation(.easeInOut(duration: 0.2), value: isSettingsMode)
     }
 
     // MARK: - Stats View
@@ -66,13 +66,15 @@ struct MetricRowView: View {
         }
     }
 
+    private static let iconWidth: CGFloat = 14
+
     private var powerStats: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 Image(systemName: "bolt.fill")
                     .font(.system(size: 10))
                     .foregroundColor(color)
-                    .frame(width: 12, alignment: .leading)
+                    .frame(width: Self.iconWidth, alignment: .center)
                 Text("Power")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -86,18 +88,10 @@ struct MetricRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            HStack(spacing: 4) {
-                Text(String(format: "CPU %.1f", metrics.cpuPower))
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
-                Text(String(format: "GPU %.1f", metrics.gpuPower))
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
-                if metrics.anePower > 0.01 {
-                    Text(String(format: "ANE %.1f", metrics.anePower))
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
-                }
+            HStack(spacing: 6) {
+                PowerBreakdownItem(label: "CPU", value: metrics.cpuPower)
+                PowerBreakdownItem(label: "GPU", value: metrics.gpuPower)
+                PowerBreakdownItem(label: "ANE", value: metrics.anePower)
             }
         }
     }
@@ -108,7 +102,7 @@ struct MetricRowView: View {
                 Image(systemName: "memorychip")
                     .font(.system(size: 10))
                     .foregroundColor(color)
-                    .frame(width: 12, alignment: .leading)
+                    .frame(width: Self.iconWidth, alignment: .center)
                 Text("Memory")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -126,12 +120,14 @@ struct MetricRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            Text(String(format: "%.1f / %.0f GB", metrics.memoryUsedGB, metrics.memoryTotalGB))
+            Text(String(format: "%5.1f / %.0f GB", metrics.memoryUsedGB, metrics.memoryTotalGB))
                 .font(.system(size: 9))
+                .monospacedDigit()
                 .foregroundColor(.secondary)
             if metrics.swapUsedGB > 0.01 {
                 Text(String(format: "Swap %.1f GB", metrics.swapUsedGB))
                     .font(.system(size: 9))
+                    .monospacedDigit()
                     .foregroundColor(.orange)
                     .tooltip("Virtual memory on disk when RAM is full")
             }
@@ -152,7 +148,7 @@ struct MetricRowView: View {
                 Image(systemName: "cpu.fill")
                     .font(.system(size: 10))
                     .foregroundColor(color)
-                    .frame(width: 12, alignment: .leading)
+                    .frame(width: Self.iconWidth, alignment: .center)
                 Text("CPU")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -168,25 +164,27 @@ struct MetricRowView: View {
             }
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 4) {
-                    Text(String(format: "E %.0f%%", metrics.eCoreUsage))
+                    Text(String(format: "E %3.0f%%", metrics.eCoreUsage))
                         .font(.system(size: 9))
+                        .monospacedDigit()
                         .foregroundColor(.secondary)
-                    if metrics.eCoreFrequencyMHz > 0 {
-                        Text(String(format: "%.1fG", metrics.eCoreFrequencyMHz / 1000))
-                            .font(.system(size: 9))
-                            .foregroundColor(.secondary.opacity(0.7))
-                    }
+                    Text(String(format: "%3.1fG", metrics.eCoreFrequencyMHz / 1000))
+                        .font(.system(size: 9))
+                        .monospacedDigit()
+                        .foregroundColor(.secondary.opacity(0.7))
+                        .opacity(metrics.eCoreFrequencyMHz > 0 ? 1 : 0)
                 }
                 .tooltip("Efficiency cores: power-saving, for light tasks")
                 HStack(spacing: 4) {
-                    Text(String(format: "P %.0f%%", metrics.pCoreUsage))
+                    Text(String(format: "P %3.0f%%", metrics.pCoreUsage))
                         .font(.system(size: 9))
+                        .monospacedDigit()
                         .foregroundColor(.secondary)
-                    if metrics.pCoreFrequencyMHz > 0 {
-                        Text(String(format: "%.1fG", metrics.pCoreFrequencyMHz / 1000))
-                            .font(.system(size: 9))
-                            .foregroundColor(.secondary.opacity(0.7))
-                    }
+                    Text(String(format: "%3.1fG", metrics.pCoreFrequencyMHz / 1000))
+                        .font(.system(size: 9))
+                        .monospacedDigit()
+                        .foregroundColor(.secondary.opacity(0.7))
+                        .opacity(metrics.pCoreFrequencyMHz > 0 ? 1 : 0)
                 }
                 .tooltip("Performance cores: high power, for demanding tasks")
             }
@@ -199,7 +197,7 @@ struct MetricRowView: View {
                 Image(systemName: "cpu")
                     .font(.system(size: 10))
                     .foregroundColor(color)
-                    .frame(width: 12, alignment: .leading)
+                    .frame(width: Self.iconWidth, alignment: .center)
                 Text("GPU")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -216,6 +214,7 @@ struct MetricRowView: View {
             if metrics.gpuFrequencyMHz > 0 {
                 Text(String(format: "%.0f MHz", metrics.gpuFrequencyMHz))
                     .font(.system(size: 9))
+                    .monospacedDigit()
                     .foregroundColor(.secondary)
             } else {
                 Text(" ")
@@ -230,7 +229,7 @@ struct MetricRowView: View {
                 Image(systemName: batteryIcon)
                     .font(.system(size: 10))
                     .foregroundColor(batteryColor)
-                    .frame(width: 12, alignment: .leading)
+                    .frame(width: Self.iconWidth, alignment: .center)
                 Text("Battery")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -256,6 +255,7 @@ struct MetricRowView: View {
                      ? String(format: "%d:%02d to full", hours, minutes)
                      : String(format: "%d:%02d remaining", hours, minutes))
                     .font(.system(size: 9))
+                    .monospacedDigit()
                     .foregroundColor(.secondary)
             } else {
                 Text(batteryStatusText)
@@ -311,7 +311,7 @@ struct MetricRowView: View {
                 Image(systemName: "network")
                     .font(.system(size: 10))
                     .foregroundColor(color)
-                    .frame(width: 12, alignment: .leading)
+                    .frame(width: Self.iconWidth, alignment: .center)
                 Text("Network")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -567,6 +567,20 @@ struct CompactColorPicker: View {
     private func isColorSelected(_ swatch: Color) -> Bool {
         // Compare colors by converting to hex
         return swatch.toHex() == color.toHex()
+    }
+}
+
+// MARK: - Power Breakdown Item
+
+private struct PowerBreakdownItem: View {
+    let label: String
+    let value: Double
+
+    var body: some View {
+        Text("\(label) \(String(format: "%.1f", value))")
+            .font(.system(size: 9).monospacedDigit())
+            .foregroundColor(.secondary)
+            .frame(width: 42, alignment: .leading)
     }
 }
 
