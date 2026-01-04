@@ -39,6 +39,17 @@ typedef struct {
     char errorMessage[256];
 } SocMetrics;
 
+/// CPU core counts for Apple Silicon
+typedef struct {
+    int eCoreCount;         // Number of efficiency cores
+    int pCoreCount;         // Number of performance cores
+    int totalCores;         // Total logical cores
+} CpuCoreInfo;
+
+/// Get CPU core counts
+/// Returns core info with E-core and P-core counts
+CpuCoreInfo getCpuCoreInfo(void);
+
 /// Initialize the IOReport subscription
 /// Must be called before sampleMetrics()
 /// Returns true on success, false on failure

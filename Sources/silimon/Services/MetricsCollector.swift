@@ -146,6 +146,8 @@ class MetricsCollector: ObservableObject {
                 metrics.eCoreFrequencyMHz = sample.eCoreFreqMHz
                 metrics.pCoreFrequencyMHz = sample.pCoreFreqMHz
                 metrics.cpuPower = sample.cpuPower
+                metrics.eCoreCount = sample.eCoreCount
+                metrics.pCoreCount = sample.pCoreCount
             }
             if settings.powerModuleEnabled {
                 metrics.packagePower = sample.packagePower

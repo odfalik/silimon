@@ -16,6 +16,8 @@ struct Metrics: Identifiable {
     var eCoreFrequencyMHz: Double = 0
     var pCoreFrequencyMHz: Double = 0
     var cpuPower: Double = 0          // Watts
+    var eCoreCount: Int = 0           // Number of E-cores
+    var pCoreCount: Int = 0           // Number of P-cores
 
     // Memory metrics
     var memoryUsedGB: Double = 0
@@ -46,8 +48,15 @@ struct Metrics: Identifiable {
     }
 
     var combinedCpuUsage: Double {
-        // Weighted average - P-cores typically have more impact
-        return (eCoreUsage + pCoreUsage * 2) / 3
+        // Core-count weighted average for accurate "% of total capacity"
+        let eWeight = Double(eCoreCount)
+        let pWeight = Double(pCoreCount)
+        let total = eWeight + pWeight
+        guard total > 0 else {
+            // Fallback if core counts not available
+            return (eCoreUsage + pCoreUsage) / 2
+        }
+        return (eCoreUsage * eWeight + pCoreUsage * pWeight) / total
     }
 
     static var empty: Metrics {

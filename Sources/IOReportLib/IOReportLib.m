@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <IOKit/IOKitLib.h>
+#import <sys/sysctl.h>
 #import "include/IOReportLib.h"
 
 // IOReport private framework declarations
@@ -214,6 +215,45 @@ static double calculateActiveRatio(CFDictionaryRef channel) {
         return (1.0 - (double)idleResidency / totalResidency) * 100.0;
     }
     return 0;
+}
+
+#pragma mark - CPU Core Info
+
+static int getSysctlInt(const char *name) {
+    int value = 0;
+    size_t size = sizeof(value);
+    if (sysctlbyname(name, &value, &size, NULL, 0) == 0) {
+        return value;
+    }
+    return 0;
+}
+
+CpuCoreInfo getCpuCoreInfo(void) {
+    CpuCoreInfo info = {0};
+
+    // Get total logical CPU count
+    info.totalCores = getSysctlInt("hw.logicalcpu");
+
+    // Check number of performance levels (E-cores and P-cores)
+    int nperflevels = getSysctlInt("hw.nperflevels");
+
+    if (nperflevels >= 2) {
+        // Apple Silicon with E-cores and P-cores
+        // perflevel0 = E-cores (efficiency), perflevel1 = P-cores (performance)
+        info.eCoreCount = getSysctlInt("hw.perflevel0.logicalcpu");
+        info.pCoreCount = getSysctlInt("hw.perflevel1.logicalcpu");
+    } else if (nperflevels == 1) {
+        // Single performance level - all cores are the same type
+        // Treat them all as P-cores for weighting purposes
+        info.pCoreCount = info.totalCores;
+        info.eCoreCount = 0;
+    } else {
+        // Fallback: assume equal split (shouldn't happen on Apple Silicon)
+        info.eCoreCount = info.totalCores / 2;
+        info.pCoreCount = info.totalCores - info.eCoreCount;
+    }
+
+    return info;
 }
 
 #pragma mark - Public API
