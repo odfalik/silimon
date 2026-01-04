@@ -14,31 +14,31 @@ struct MetricRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            // Drag handle overlay - positioned absolutely when in settings mode
+        HStack(spacing: 8) {
+            // Drag handle - compact, only in settings mode
             if isSettingsMode {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.secondary.opacity(0.5))
-                    .frame(width: 20)
-                    .padding(.trailing, 8)
+                    .frame(width: 14)
             }
 
-            // Left side: stats - fixed width to prevent truncation and overflow
+            // Stats - sizes naturally to content, never truncates
             statsView
-                .frame(width: 115, alignment: .leading)
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 4)
 
-            // Right side: chart or settings - fills remaining space (low priority)
+            // Right side
             if isSettingsMode {
                 settingsView
             } else {
+                // Chart gets fixed width - stats get remaining space
                 chartView
+                    .frame(width: settings.sparklineWidth.pixels)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
         .background(
             ZStack {
                 Color(NSColor.controlBackgroundColor)
@@ -348,7 +348,6 @@ struct MetricRowView: View {
 
     private var chartView: some View {
         chartContent
-            .frame(maxWidth: .infinity)
             .mask(
                 LinearGradient(
                     gradient: Gradient(stops: [
@@ -474,29 +473,26 @@ struct MetricRowView: View {
     // MARK: - Settings View
 
     private var settingsView: some View {
-        HStack {
-            Spacer()
-            HStack(spacing: 8) {
-                PillToggle(
-                    label: "Menu Bar",
-                    isOn: settings.isShownInBar(metric),
-                    color: color
-                ) {
-                    settings.setShownInBar(metric, !settings.isShownInBar(metric))
-                }
-
-                PillToggle(
-                    label: "Panel",
-                    isOn: settings.isModuleEnabled(metric),
-                    color: color
-                ) {
-                    settings.setModuleEnabled(metric, !settings.isModuleEnabled(metric))
-                    onSettingsChanged()
-                }
-
-                // Compact color dot button
-                CompactColorPicker(color: settings.colorBinding(for: metric))
+        HStack(spacing: 6) {
+            Spacer(minLength: 0)
+            PillToggle(
+                label: "Bar",
+                isOn: settings.isShownInBar(metric),
+                color: color
+            ) {
+                settings.setShownInBar(metric, !settings.isShownInBar(metric))
             }
+
+            PillToggle(
+                label: "Panel",
+                isOn: settings.isModuleEnabled(metric),
+                color: color
+            ) {
+                settings.setModuleEnabled(metric, !settings.isModuleEnabled(metric))
+                onSettingsChanged()
+            }
+
+            CompactColorPicker(color: settings.colorBinding(for: metric))
         }
     }
 }
