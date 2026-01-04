@@ -90,7 +90,7 @@ struct MetricRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 PowerBreakdownItem(label: "CPU", value: metrics.cpuPower)
                 PowerBreakdownItem(label: "GPU", value: metrics.gpuPower)
                 PowerBreakdownItem(label: "ANE", value: metrics.anePower)
@@ -580,7 +580,7 @@ private struct PowerBreakdownItem: View {
         Text("\(label) \(String(format: "%.1f", value))")
             .font(.system(size: 9).monospacedDigit())
             .foregroundColor(.secondary)
-            .frame(width: 42, alignment: .leading)
+            .frame(width: 35, alignment: .leading)
     }
 }
 
