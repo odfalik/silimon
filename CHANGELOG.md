@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.8.0](https://github.com/odfalik/silimon/compare/v0.7.2...v0.8.0) (2026-01-03)
+
+
+### Features
+
+* add configurable history duration slider (30s to 5 minutes)
+* add custom color picker with curated color palette for each metric
+* add sparkline width options (narrow, medium, wide)
+* add confirmation dialogs for Reset and Quit buttons
+
+
+### Bug Fixes
+
+* fix export button height to match other buttons
+* fix CPU frequency parsing (kHz not Hz)
+* fix notification API crash when running without app bundle
+* fix Y-scale mismatch between menu bar sparkline and popover charts
+
+
+### Performance
+
+* remove 60fps TimelineView animations causing unnecessary CPU usage
+* add Metal-accelerated chart rendering with .drawingGroup()
+* reduce chart samples from 60 to 30 for smoother updates
+
+
+### Defaults
+
+* change default mode to graph (sparkline) instead of text
+* show GPU, CPU, Memory in menu bar by default
+* set default history duration to 60 seconds
+
 ## [0.7.2](https://github.com/odfalik/silimon/compare/v0.7.1...v0.7.2) (2026-01-03)
 
 
