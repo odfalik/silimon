@@ -81,6 +81,7 @@ jobs:
             echo '  desc "Apple Silicon performance monitor for your menu bar"'
             echo '  homepage "https://github.com/odfalik/silimon"'
             echo "  url \"https://github.com/odfalik/silimon/releases/download/${TAG}/silimon-${VERSION}-arm64.tar.gz\""
+            echo "  version \"${VERSION}\""
             echo "  sha256 \"${SHA256}\""
             echo '  license "MIT"'
             echo ''
