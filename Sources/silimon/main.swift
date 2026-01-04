@@ -40,6 +40,24 @@ if args.contains("--debug") {
     exit(0)
 }
 
+// Kill any existing silimon processes (except self)
+let myPid = ProcessInfo.processInfo.processIdentifier
+let task = Process()
+task.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+task.arguments = ["-x", "silimon"]
+let pipe = Pipe()
+task.standardOutput = pipe
+try? task.run()
+task.waitUntilExit()
+let data = pipe.fileHandleForReading.readDataToEndOfFile()
+if let output = String(data: data, encoding: .utf8) {
+    for line in output.split(separator: "\n") {
+        if let pid = Int32(line), pid != myPid {
+            kill(pid, SIGTERM)
+        }
+    }
+}
+
 // Daemonize unless --foreground flag is passed
 if !args.contains("--foreground") {
     // Get absolute path to self
