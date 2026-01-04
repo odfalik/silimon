@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.10](https://github.com/odfalik/silimon/compare/v0.8.9...v0.8.10) (2026-01-04)
+
+
+### Bug Fixes
+
+* use layoutPriority to prevent stats truncation ([3843b3b](https://github.com/odfalik/silimon/commit/3843b3b199095f3a9adf190ee512aeffd2a6bb12))
+
 ## [0.8.9](https://github.com/odfalik/silimon/compare/v0.8.8...v0.8.9) (2026-01-04)
 
 
