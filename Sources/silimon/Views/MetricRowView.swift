@@ -33,10 +33,10 @@ struct MetricRowView: View {
             if isSettingsMode {
                 settingsView
             } else {
-                // Chart gets fixed size appropriate for popover
-                // Note: sparklineWidth setting is for status bar, not popover
+                // Chart fills remaining space after stats
                 chartView
-                    .frame(width: 120, height: 50)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
             }
         }
         .padding(.horizontal, 10)
@@ -350,16 +350,6 @@ struct MetricRowView: View {
 
     private var chartView: some View {
         chartContent
-            .mask(
-                LinearGradient(
-                    gradient: Gradient(stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: 0.2)
-                    ]),
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
     }
 
     /// Returns 0-1 indicating how "stressed" this metric is
@@ -418,14 +408,26 @@ struct MetricRowView: View {
         return Array(samples.suffix(maxSamples))
     }
 
+    private var fadeMask: some View {
+        LinearGradient(
+            gradient: Gradient(stops: [
+                .init(color: .clear, location: 0),
+                .init(color: .black, location: 0.12)
+            ]),
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
     @ViewBuilder
     private var chartContent: some View {
         let displaySamples = chartSamples
         if displaySamples.count > 1 {
             Chart {
-                ForEach(displaySamples) { sample in
+                // Use array index for X-axis to ensure even spacing
+                ForEach(Array(displaySamples.enumerated()), id: \.element.id) { index, sample in
                     LineMark(
-                        x: .value("Time", sample.timestamp),
+                        x: .value("Index", index),
                         y: .value("Value", ChartConfig.value(from: sample, for: metric))
                     )
                     .foregroundStyle(color.opacity(0.8))
@@ -438,6 +440,7 @@ struct MetricRowView: View {
             .chartBackground { _ in
                 staticGridBackground
             }
+            .mask(fadeMask)
             .drawingGroup()  // Flatten to Metal layer for better performance
         } else {
             // Placeholder when no data
