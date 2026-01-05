@@ -60,6 +60,7 @@ struct MetricRowView: View {
                     settingsView
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
