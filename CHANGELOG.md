@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.24](https://github.com/odfalik/silimon/compare/v0.8.23...v0.8.24) (2026-01-05)
+
+
+### Bug Fixes
+
+* use leading alignment for icons to ensure cross-SDK consistency ([e7557a9](https://github.com/odfalik/silimon/commit/e7557a953d5e962a058ae4f2a86135d128c554d6))
+
 ## [0.8.23](https://github.com/odfalik/silimon/compare/v0.8.22...v0.8.23) (2026-01-05)
 
 
