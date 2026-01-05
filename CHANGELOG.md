@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.19](https://github.com/odfalik/silimon/compare/v0.8.18...v0.8.19) (2026-01-05)
+
+
+### Bug Fixes
+
+* resolve icon alignment inconsistency across metric rows ([c014bb5](https://github.com/odfalik/silimon/commit/c014bb52d7e1c7f5bed73b3e9670b390a27eeb76))
+
 ## [0.8.18](https://github.com/odfalik/silimon/compare/v0.8.17...v0.8.18) (2026-01-05)
 
 
