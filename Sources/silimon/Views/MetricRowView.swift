@@ -14,54 +14,49 @@ struct MetricRowView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .leading) {
-            // Chart behind stats - 3/4 width, right-aligned with fade
-            if !isSettingsMode {
-                HStack {
-                    Spacer()
+        HStack(spacing: 8) {
+            // Drag handle - compact, only in settings mode
+            if isSettingsMode {
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.secondary.opacity(0.5))
+                    .frame(width: 14)
+            }
+
+            // Stats - sizes naturally to content, never truncates
+            statsView
+                .fixedSize(horizontal: true, vertical: false)
+
+            Spacer(minLength: 4)
+
+            // Right side - only settings in settings mode
+            if isSettingsMode {
+                settingsView
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            // Chart behind stats with fade
+            Group {
+                if !isSettingsMode {
                     chartView
                         .frame(height: 50)
-                }
-                .frame(maxWidth: .infinity)
-                .mask(
-                    GeometryReader { geo in
-                        LinearGradient(
-                            gradient: Gradient(stops: [
-                                .init(color: .clear, location: 0),
-                                .init(color: .clear, location: 0.25),
-                                .init(color: .black, location: 0.4),
-                                .init(color: .black, location: 1.0)
-                            ]),
-                            startPoint: .leading,
-                            endPoint: .trailing
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .mask(
+                            LinearGradient(
+                                gradient: Gradient(stops: [
+                                    .init(color: .clear, location: 0),
+                                    .init(color: .clear, location: 0.25),
+                                    .init(color: .black, location: 0.4),
+                                    .init(color: .black, location: 1.0)
+                                ]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
-                    }
-                )
-            }
-
-            // Foreground content
-            HStack(spacing: 8) {
-                // Drag handle - compact, only in settings mode
-                if isSettingsMode {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary.opacity(0.5))
-                        .frame(width: 14)
-                }
-
-                // Stats - sizes naturally to content, never truncates
-                statsView
-                    .fixedSize(horizontal: true, vertical: false)
-
-                Spacer(minLength: 4)
-
-                // Right side - only settings in settings mode
-                if isSettingsMode {
-                    settingsView
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
+        )
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(
