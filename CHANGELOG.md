@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.22](https://github.com/odfalik/silimon/compare/v0.8.21...v0.8.22) (2026-01-05)
+
+
+### Bug Fixes
+
+* align metric rows with VStack leading alignment ([d8feb6c](https://github.com/odfalik/silimon/commit/d8feb6c757310474701083f9fc6610f9bff1ae4c))
+
 ## [0.8.21](https://github.com/odfalik/silimon/compare/v0.8.20...v0.8.21) (2026-01-05)
 
 
