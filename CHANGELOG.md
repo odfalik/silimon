@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.16](https://github.com/odfalik/silimon/compare/v0.8.15...v0.8.16) (2026-01-05)
+
+
+### Bug Fixes
+
+* make popover chart fill available width ([fff2824](https://github.com/odfalik/silimon/commit/fff2824bbc1037a272916d9f7136f298679afaba))
+
 ## [0.8.15](https://github.com/odfalik/silimon/compare/v0.8.14...v0.8.15) (2026-01-04)
 
 
