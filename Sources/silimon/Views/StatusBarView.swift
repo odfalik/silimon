@@ -27,7 +27,7 @@ class StatusBarView: NSView, NSAccessibilityGroup {
             case .power:
                 parts.append("Power: \(Int(metrics.packagePower)) watts")
             case .cpu:
-                parts.append("CPU: \(Int(max(metrics.eCoreUsage, metrics.pCoreUsage))) percent")
+                parts.append("CPU: \(Int(metrics.combinedCpuUsage)) percent")
             case .gpu:
                 parts.append("GPU: \(Int(metrics.gpuUsage)) percent")
             case .memory:
@@ -151,7 +151,7 @@ class StatusBarView: NSView, NSAccessibilityGroup {
             return (hasData, metrics.memoryUsagePercent, fillPercent, "%", "memorychip", color)
 
         case .cpu:
-            let cpuUsage = max(metrics.eCoreUsage, metrics.pCoreUsage)
+            let cpuUsage = metrics.combinedCpuUsage
             let hasData = metrics.eCoreFrequencyMHz > 0 || metrics.pCoreFrequencyMHz > 0 || cpuUsage > 0
             let fillPercent = hasData ? cpuUsage / 100.0 : 0
             return (hasData, cpuUsage, fillPercent, "%", "cpu.fill", color)

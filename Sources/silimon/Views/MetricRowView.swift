@@ -14,29 +14,51 @@ struct MetricRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
-            // Drag handle - compact, only in settings mode
-            if isSettingsMode {
-                Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.secondary.opacity(0.5))
-                    .frame(width: 14)
+        ZStack(alignment: .leading) {
+            // Chart behind stats - 3/4 width, right-aligned with fade
+            if !isSettingsMode {
+                HStack {
+                    Spacer()
+                    chartView
+                        .frame(height: 50)
+                }
+                .frame(maxWidth: .infinity)
+                .mask(
+                    GeometryReader { geo in
+                        LinearGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: .clear, location: 0),
+                                .init(color: .clear, location: 0.25),
+                                .init(color: .black, location: 0.4),
+                                .init(color: .black, location: 1.0)
+                            ]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    }
+                )
             }
 
-            // Stats - sizes naturally to content, never truncates
-            statsView
-                .fixedSize(horizontal: true, vertical: false)
+            // Foreground content
+            HStack(spacing: 8) {
+                // Drag handle - compact, only in settings mode
+                if isSettingsMode {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary.opacity(0.5))
+                        .frame(width: 14)
+                }
 
-            Spacer(minLength: 4)
+                // Stats - sizes naturally to content, never truncates
+                statsView
+                    .fixedSize(horizontal: true, vertical: false)
 
-            // Right side
-            if isSettingsMode {
-                settingsView
-            } else {
-                // Chart fills remaining space after stats
-                chartView
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                Spacer(minLength: 4)
+
+                // Right side - only settings in settings mode
+                if isSettingsMode {
+                    settingsView
+                }
             }
         }
         .padding(.horizontal, 10)
@@ -95,7 +117,6 @@ struct MetricRowView: View {
             HStack(spacing: 4) {
                 PowerBreakdownItem(label: "CPU", value: metrics.cpuPower)
                 PowerBreakdownItem(label: "GPU", value: metrics.gpuPower)
-                PowerBreakdownItem(label: "ANE", value: metrics.anePower)
             }
         }
     }
@@ -110,6 +131,7 @@ struct MetricRowView: View {
                 Text("Memory")
                     .font(.caption2)
                     .foregroundColor(.secondary)
+                    .fixedSize(horizontal: true, vertical: false)
                 // Memory pressure indicator
                 Circle()
                     .fill(memoryPressureColor)
