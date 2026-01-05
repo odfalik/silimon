@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.20](https://github.com/odfalik/silimon/compare/v0.8.19...v0.8.20) (2026-01-05)
+
+
+### Bug Fixes
+
+* ensure consistent icon alignment with minWidth frame ([f47c8ed](https://github.com/odfalik/silimon/commit/f47c8ed6e70ec7d44f8d94e89794add36f94cfac))
+
 ## [0.8.19](https://github.com/odfalik/silimon/compare/v0.8.18...v0.8.19) (2026-01-05)
 
 
