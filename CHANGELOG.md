@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.21](https://github.com/odfalik/silimon/compare/v0.8.20...v0.8.21) (2026-01-05)
+
+
+### Bug Fixes
+
+* use macOS 15 with Xcode 16.2 for consistent SwiftUI layout ([2871ca3](https://github.com/odfalik/silimon/commit/2871ca3b613062d6a568e6d1ea554d20c09d9560))
+
 ## [0.8.20](https://github.com/odfalik/silimon/compare/v0.8.19...v0.8.20) (2026-01-05)
 
 
