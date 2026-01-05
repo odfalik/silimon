@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.18](https://github.com/odfalik/silimon/compare/v0.8.17...v0.8.18) (2026-01-05)
+
+
+### Bug Fixes
+
+* ensure proper alignment in ZStack layout ([0668398](https://github.com/odfalik/silimon/commit/0668398075a93d6a8b60b8ba4627908623179f71))
+
 ## [0.8.17](https://github.com/odfalik/silimon/compare/v0.8.16...v0.8.17) (2026-01-05)
 
 
