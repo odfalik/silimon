@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.23](https://github.com/odfalik/silimon/compare/v0.8.22...v0.8.23) (2026-01-05)
+
+
+### Bug Fixes
+
+* use fixed-width frame for statsView to ensure consistent alignment ([e7df7a8](https://github.com/odfalik/silimon/commit/e7df7a85884f6fd01aa646e0780dfa793716797b))
+
 ## [0.8.22](https://github.com/odfalik/silimon/compare/v0.8.21...v0.8.22) (2026-01-05)
 
 
