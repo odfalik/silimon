@@ -23,10 +23,9 @@ struct MetricRowView: View {
                     .frame(width: 14)
             }
 
-            // Stats - sizes naturally to content, aligned to leading edge
+            // Stats - sizes naturally to content, never truncates
             statsView
                 .fixedSize(horizontal: true, vertical: false)
-                .frame(minWidth: 120, alignment: .leading)
 
             Spacer(minLength: 4)
 

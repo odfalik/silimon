@@ -44,7 +44,7 @@ struct PopoverView: View {
 
             // Metric rows
             ScrollView {
-                VStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
                     ForEach(settings.metricOrder) { metric in
                         if settings.isModuleEnabled(metric) || isSettingsMode {
                             MetricRowView(
