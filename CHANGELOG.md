@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.17](https://github.com/odfalik/silimon/compare/v0.8.16...v0.8.17) (2026-01-05)
+
+
+### Bug Fixes
+
+* resolve popover alignment issues and restore chart fadeout ([19de8d6](https://github.com/odfalik/silimon/commit/19de8d6131a11228b1bf718e0913630d5dcf29e9))
+
 ## [0.8.16](https://github.com/odfalik/silimon/compare/v0.8.15...v0.8.16) (2026-01-05)
 
 
