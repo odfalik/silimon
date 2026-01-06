@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.31](https://github.com/odfalik/silimon/compare/v0.8.30...v0.8.31) (2026-01-06)
+
+
+### Bug Fixes
+
+* move tooltip from circle to icon row HStack ([b2bffb6](https://github.com/odfalik/silimon/commit/b2bffb65d99ec6a6bbd7d4fe80613bc845ca26ca))
+
 ## [0.8.30](https://github.com/odfalik/silimon/compare/v0.8.29...v0.8.30) (2026-01-06)
 
 
