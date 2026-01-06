@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.26](https://github.com/odfalik/silimon/compare/v0.8.25...v0.8.26) (2026-01-06)
+
+
+### Bug Fixes
+
+* remove fixedSize to allow natural layout alignment ([8a9cf1f](https://github.com/odfalik/silimon/commit/8a9cf1f24cbb730a6086c70c879f7a30fe0f5170))
+
 ## [0.8.25](https://github.com/odfalik/silimon/compare/v0.8.24...v0.8.25) (2026-01-06)
 
 
