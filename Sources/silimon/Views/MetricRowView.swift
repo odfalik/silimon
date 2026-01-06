@@ -23,9 +23,8 @@ struct MetricRowView: View {
                     .frame(width: 14)
             }
 
-            // Stats - sizes naturally to content, never truncates
+            // Stats
             statsView
-                .fixedSize(horizontal: true, vertical: false)
 
             Spacer(minLength: 4)
 
