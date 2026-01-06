@@ -154,6 +154,7 @@ struct MetricRowView: View {
                     .monospacedDigit()
                     .foregroundColor(.orange)
                     .tooltip("Virtual memory on disk when RAM is full")
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -214,6 +215,7 @@ struct MetricRowView: View {
                 }
                 .tooltip("Performance cores: high power, for demanding tasks")
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
