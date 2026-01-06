@@ -100,6 +100,7 @@ struct MetricRowView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .tooltip("Total SoC power consumption. Idle: 2-5W, Heavy use: 20-40W")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.1f", metrics.packagePower))
@@ -176,6 +177,7 @@ struct MetricRowView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .tooltip("E-cores: Efficiency (light tasks). P-cores: Performance (heavy work)")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.combinedCpuUsage))
