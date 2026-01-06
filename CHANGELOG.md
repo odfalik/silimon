@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.30](https://github.com/odfalik/silimon/compare/v0.8.29...v0.8.30) (2026-01-06)
+
+
+### Bug Fixes
+
+* remove frame from memory icon row to fix dot alignment ([0a03060](https://github.com/odfalik/silimon/commit/0a0306094797985f280305a3acef332c00214c17))
+
 ## [0.8.29](https://github.com/odfalik/silimon/compare/v0.8.28...v0.8.29) (2026-01-06)
 
 
