@@ -135,6 +135,7 @@ struct MetricRowView: View {
                     .frame(width: 6, height: 6)
                     .tooltip("Memory pressure: \(metrics.memoryPressure.rawValue)")
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.memoryUsagePercent))
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -228,6 +229,7 @@ struct MetricRowView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .tooltip("Integrated GPU usage. Video: 10-30%, Gaming/3D: 50-100%")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.gpuUsage))
@@ -266,6 +268,7 @@ struct MetricRowView: View {
                         .foregroundColor(.yellow)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .tooltip("Battery level and charging status. Check power usage if draining fast.")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.batteryLevel))
@@ -344,6 +347,7 @@ struct MetricRowView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .tooltip("Current network throughput across all interfaces")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Image(systemName: "arrow.down")
