@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.29](https://github.com/odfalik/silimon/compare/v0.8.28...v0.8.29) (2026-01-06)
+
+
+### Bug Fixes
+
+* keep memory pressure dot next to label with Spacer ([1f07491](https://github.com/odfalik/silimon/commit/1f074919be1b0ee7869eaf88a98ce8a4696d9005))
+
 ## [0.8.28](https://github.com/odfalik/silimon/compare/v0.8.27...v0.8.28) (2026-01-06)
 
 
