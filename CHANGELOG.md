@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.27](https://github.com/odfalik/silimon/compare/v0.8.26...v0.8.27) (2026-01-06)
+
+
+### Bug Fixes
+
+* add explicit leading alignment to Power and CPU icon rows ([04c96ad](https://github.com/odfalik/silimon/commit/04c96ad7e2d5b0533a0260c483d39acd0e3070fc))
+
 ## [0.8.26](https://github.com/odfalik/silimon/compare/v0.8.25...v0.8.26) (2026-01-06)
 
 
