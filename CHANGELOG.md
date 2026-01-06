@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.34](https://github.com/odfalik/silimon/compare/v0.8.33...v0.8.34) (2026-01-06)
+
+
+### Bug Fixes
+
+* use Spacers to push Swap and E/P stats to leading edge ([58053f6](https://github.com/odfalik/silimon/commit/58053f6f834adb482c7efe708fbe4ff6ac89346e))
+
 ## [0.8.33](https://github.com/odfalik/silimon/compare/v0.8.32...v0.8.33) (2026-01-06)
 
 
