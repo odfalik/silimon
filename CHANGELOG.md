@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.28](https://github.com/odfalik/silimon/compare/v0.8.27...v0.8.28) (2026-01-06)
+
+
+### Bug Fixes
+
+* add explicit leading alignment to all metric icon rows ([ec4db84](https://github.com/odfalik/silimon/commit/ec4db8429fb0bc19392dec8975c11d3383cb0833))
+
 ## [0.8.27](https://github.com/odfalik/silimon/compare/v0.8.26...v0.8.27) (2026-01-06)
 
 
