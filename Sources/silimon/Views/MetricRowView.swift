@@ -133,6 +133,7 @@ struct MetricRowView: View {
                 Circle()
                     .fill(memoryPressureColor)
                     .frame(width: 6, height: 6)
+                Spacer(minLength: 0)
             }
             .tooltip("Memory pressure: \(metrics.memoryPressure.rawValue)")
             HStack(alignment: .firstTextBaseline, spacing: 2) {
