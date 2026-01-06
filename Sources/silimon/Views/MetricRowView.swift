@@ -23,10 +23,9 @@ struct MetricRowView: View {
                     .frame(width: 14)
             }
 
-            // Stats - fixed width ensures consistent alignment across all rows
+            // Stats - sizes naturally to content, never truncates
             statsView
                 .fixedSize(horizontal: true, vertical: false)
-                .frame(width: 130, alignment: .leading)
 
             Spacer(minLength: 4)
 
@@ -116,6 +115,7 @@ struct MetricRowView: View {
                 PowerBreakdownItem(label: "GPU", value: metrics.gpuPower)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var memoryStats: some View {
@@ -155,6 +155,7 @@ struct MetricRowView: View {
                     .tooltip("Virtual memory on disk when RAM is full")
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var memoryPressureColor: Color {
@@ -212,6 +213,7 @@ struct MetricRowView: View {
                 .tooltip("Performance cores: high power, for demanding tasks")
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var gpuStats: some View {
@@ -244,6 +246,7 @@ struct MetricRowView: View {
                     .font(.system(size: 9))
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var batteryStats: some View {
@@ -286,6 +289,7 @@ struct MetricRowView: View {
                     .foregroundColor(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var batteryIcon: String {
@@ -363,6 +367,7 @@ struct MetricRowView: View {
                     .foregroundColor(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Chart View with Fade
