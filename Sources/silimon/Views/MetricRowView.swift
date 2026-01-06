@@ -134,9 +134,7 @@ struct MetricRowView: View {
                     .fill(memoryPressureColor)
                     .frame(width: 6, height: 6)
                     .tooltip("Memory pressure: \(metrics.memoryPressure.rawValue)")
-                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", metrics.memoryUsagePercent))
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
