@@ -149,12 +149,14 @@ struct MetricRowView: View {
                 .monospacedDigit()
                 .foregroundColor(.secondary)
             if metrics.swapUsedGB > 0.01 {
-                Text(String(format: "Swap %.1f GB", metrics.swapUsedGB))
-                    .font(.system(size: 9))
-                    .monospacedDigit()
-                    .foregroundColor(.orange)
-                    .tooltip("Virtual memory on disk when RAM is full")
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack {
+                    Text(String(format: "Swap %.1f GB", metrics.swapUsedGB))
+                        .font(.system(size: 9))
+                        .monospacedDigit()
+                        .foregroundColor(.orange)
+                        .tooltip("Virtual memory on disk when RAM is full")
+                    Spacer(minLength: 0)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -200,6 +202,7 @@ struct MetricRowView: View {
                         .monospacedDigit()
                         .foregroundColor(.secondary.opacity(0.7))
                         .opacity(metrics.eCoreFrequencyMHz > 0 ? 1 : 0)
+                    Spacer(minLength: 0)
                 }
                 .tooltip("Efficiency cores: power-saving, for light tasks")
                 HStack(spacing: 4) {
@@ -212,10 +215,10 @@ struct MetricRowView: View {
                         .monospacedDigit()
                         .foregroundColor(.secondary.opacity(0.7))
                         .opacity(metrics.pCoreFrequencyMHz > 0 ? 1 : 0)
+                    Spacer(minLength: 0)
                 }
                 .tooltip("Performance cores: high power, for demanding tasks")
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
