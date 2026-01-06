@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.33](https://github.com/odfalik/silimon/compare/v0.8.32...v0.8.33) (2026-01-06)
+
+
+### Bug Fixes
+
+* align Swap text and E/P stats to leading edge ([2b443c8](https://github.com/odfalik/silimon/commit/2b443c88307c80be3b246c7427d6380370471faf))
+
 ## [0.8.32](https://github.com/odfalik/silimon/compare/v0.8.31...v0.8.32) (2026-01-06)
 
 
