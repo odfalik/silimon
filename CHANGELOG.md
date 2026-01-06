@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.25](https://github.com/odfalik/silimon/compare/v0.8.24...v0.8.25) (2026-01-06)
+
+
+### Bug Fixes
+
+* add explicit frame alignment to all statsViews ([8062016](https://github.com/odfalik/silimon/commit/8062016a0a503cbedf694d85fad83660e464c909))
+
 ## [0.8.24](https://github.com/odfalik/silimon/compare/v0.8.23...v0.8.24) (2026-01-05)
 
 
