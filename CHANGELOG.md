@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.32](https://github.com/odfalik/silimon/compare/v0.8.31...v0.8.32) (2026-01-06)
+
+
+### Bug Fixes
+
+* add spacer to memory icon row to push content left ([6023d9c](https://github.com/odfalik/silimon/commit/6023d9c4a31b5d3a598c07f73cb7397b507321a7))
+
 ## [0.8.31](https://github.com/odfalik/silimon/compare/v0.8.30...v0.8.31) (2026-01-06)
 
 
