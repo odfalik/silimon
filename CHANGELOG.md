@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.35](https://github.com/odfalik/silimon/compare/v0.8.34...v0.8.35) (2026-01-07)
+
+
+### Bug Fixes
+
+* show 0% instead of --% when GPU is idle ([f8fbdba](https://github.com/odfalik/silimon/commit/f8fbdba7ddf6b0e70ff216bed1b5f0acb8667bc6))
+
 ## [0.8.34](https://github.com/odfalik/silimon/compare/v0.8.33...v0.8.34) (2026-01-06)
 
 
