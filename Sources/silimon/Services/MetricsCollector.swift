@@ -108,6 +108,7 @@ class MetricsCollector: ObservableObject {
 
     private func collectSample() {
         var metrics = Metrics(timestamp: Date())
+        metrics.isCollected = true
 
         // Collect memory stats - only if memory module is enabled
         if settings.memoryModuleEnabled {

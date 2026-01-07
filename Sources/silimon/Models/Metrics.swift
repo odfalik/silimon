@@ -5,6 +5,9 @@ struct Metrics: Identifiable {
     let id = UUID()
     let timestamp: Date
 
+    /// True once real data has been collected (vs initial empty state)
+    var isCollected: Bool = false
+
     // GPU metrics
     var gpuUsage: Double = 0          // 0-100%
     var gpuFrequencyMHz: Double = 0

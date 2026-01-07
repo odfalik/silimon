@@ -157,7 +157,8 @@ class StatusBarView: NSView, NSAccessibilityGroup {
             return (hasData, cpuUsage, fillPercent, "%", "cpu.fill", color)
 
         case .gpu:
-            let hasData = metrics.gpuFrequencyMHz > 0 || metrics.gpuUsage > 0
+            // GPU at 0% usage is valid data when idle, not "no data"
+            let hasData = metrics.isCollected
             let fillPercent = hasData ? metrics.gpuUsage / 100.0 : 0
             return (hasData, metrics.gpuUsage, fillPercent, "%", "cpu", color)
 
