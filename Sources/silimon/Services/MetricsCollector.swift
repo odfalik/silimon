@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Combine
 
 /// Main orchestrator for collecting system metrics
@@ -16,6 +16,9 @@ class MetricsCollector: ObservableObject {
     private let networkStats = NetworkStats()
     private let ioReportService: IOReportService
     private var powerStateObserver: NSObjectProtocol?
+    private var screenSleepObserver: NSObjectProtocol?
+    private var screenWakeObserver: NSObjectProtocol?
+    private var isScreenAsleep = false
     private let alertService = AlertService.shared
 
     private let settings: Settings
@@ -28,6 +31,7 @@ class MetricsCollector: ObservableObject {
         // Use shorter sampling duration for IOReport (100ms is enough for accurate readings)
         self.ioReportService = IOReportService(samplingDurationMs: 100)
         setupPowerStateObserver()
+        setupScreenSleepObservers()
         updateLowPowerState()
     }
 
@@ -50,8 +54,45 @@ class MetricsCollector: ObservableObject {
         updateLowPowerState()
 
         // Restart timer with new interval if power state changed
-        if wasLowPower != isLowPowerMode && isCollecting {
+        if wasLowPower != isLowPowerMode && isCollecting && !isScreenAsleep {
             startTimer()
+        }
+    }
+
+    private func setupScreenSleepObservers() {
+        let workspace = NSWorkspace.shared.notificationCenter
+
+        screenSleepObserver = workspace.addObserver(
+            forName: NSWorkspace.screensDidSleepNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleScreenSleep()
+        }
+
+        screenWakeObserver = workspace.addObserver(
+            forName: NSWorkspace.screensDidWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleScreenWake()
+        }
+    }
+
+    private func handleScreenSleep() {
+        isScreenAsleep = true
+        // Pause collection to save power
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func handleScreenWake() {
+        isScreenAsleep = false
+        // Resume collection if we were collecting before sleep
+        if isCollecting {
+            startTimer()
+            // Collect a fresh sample immediately on wake
+            collectSample()
         }
     }
 
@@ -214,6 +255,13 @@ class MetricsCollector: ObservableObject {
         stop()
         if let observer = powerStateObserver {
             NotificationCenter.default.removeObserver(observer)
+        }
+        let workspace = NSWorkspace.shared.notificationCenter
+        if let observer = screenSleepObserver {
+            workspace.removeObserver(observer)
+        }
+        if let observer = screenWakeObserver {
+            workspace.removeObserver(observer)
         }
     }
 }
