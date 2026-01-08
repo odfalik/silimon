@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.36](https://github.com/odfalik/silimon/compare/v0.8.35...v0.8.36) (2026-01-08)
+
+
+### Bug Fixes
+
+* pause metrics collection when screen is off ([4e4ba45](https://github.com/odfalik/silimon/commit/4e4ba45d71ca273b178694b373ab63ac11d8a222))
+
 ## [0.8.35](https://github.com/odfalik/silimon/compare/v0.8.34...v0.8.35) (2026-01-07)
 
 
