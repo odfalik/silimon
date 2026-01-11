@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.37](https://github.com/odfalik/silimon/compare/v0.8.36...v0.8.37) (2026-01-11)
+
+
+### Bug Fixes
+
+* prevent deadlock when opening diagnostics screen ([2745ff1](https://github.com/odfalik/silimon/commit/2745ff128a863207285e47229355c8e7b993a4d2))
+
 ## [0.8.36](https://github.com/odfalik/silimon/compare/v0.8.35...v0.8.36) (2026-01-08)
 
 
