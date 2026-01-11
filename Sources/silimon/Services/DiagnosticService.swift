@@ -152,22 +152,22 @@ class DiagnosticService {
     }
 
     private func checkIOReportInitialization() -> DiagnosticResult {
-        // Create a temporary instance to test initialization
-        let service = IOReportService()
-        if service.initialize() {
-            service.cleanup()
+        // Just check if the API is available - don't actually initialize
+        // because IOReport uses global state that MetricsCollector is actively using.
+        // Trying to access it from another thread causes deadlocks.
+        if IOReportService.isAvailable {
             return DiagnosticResult(
                 name: "IOReport Init",
                 status: .pass,
-                message: "Successfully initialized",
+                message: "API available",
                 suggestion: nil
             )
         } else {
             return DiagnosticResult(
                 name: "IOReport Init",
                 status: .fail,
-                message: "Failed to initialize subscription",
-                suggestion: "Try restarting your Mac. If problem persists, power metrics may not work."
+                message: "API not available",
+                suggestion: "IOReport framework not accessible. Power metrics may not work."
             )
         }
     }
