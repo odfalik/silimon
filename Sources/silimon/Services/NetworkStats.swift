@@ -74,38 +74,41 @@ class NetworkStats {
         return (bytesIn, bytesOut)
     }
 
-    /// Format bytes per second as human-readable string
+    /// Format bytes per second as human-readable bits per second string
     static func formatBytesPerSec(_ bytesPerSec: Double) -> String {
-        if bytesPerSec < 1024 {
-            return String(format: "%.0f B/s", bytesPerSec)
-        } else if bytesPerSec < 1024 * 1024 {
-            return String(format: "%.1f KB/s", bytesPerSec / 1024)
-        } else if bytesPerSec < 1024 * 1024 * 1024 {
-            return String(format: "%.1f MB/s", bytesPerSec / (1024 * 1024))
+        let bitsPerSec = bytesPerSec * 8
+        if bitsPerSec < 1_000 {
+            return String(format: "%.0f bps", bitsPerSec)
+        } else if bitsPerSec < 1_000_000 {
+            return String(format: "%.1f Kbps", bitsPerSec / 1_000)
+        } else if bitsPerSec < 1_000_000_000 {
+            return String(format: "%.1f Mbps", bitsPerSec / 1_000_000)
         } else {
-            return String(format: "%.2f GB/s", bytesPerSec / (1024 * 1024 * 1024))
+            return String(format: "%.2f Gbps", bitsPerSec / 1_000_000_000)
         }
     }
 
-    /// Format bytes per second as compact string (for menu bar)
+    /// Format bytes per second as compact bits per second string (for menu bar)
     static func formatCompact(_ bytesPerSec: Double) -> String {
-        if bytesPerSec < 1024 {
-            return String(format: "%.0f", bytesPerSec)
-        } else if bytesPerSec < 1024 * 1024 {
-            return String(format: "%.0f", bytesPerSec / 1024)
+        let bitsPerSec = bytesPerSec * 8
+        if bitsPerSec < 1_000 {
+            return String(format: "%.0f", bitsPerSec)
+        } else if bitsPerSec < 1_000_000 {
+            return String(format: "%.0f", bitsPerSec / 1_000)
         } else {
-            return String(format: "%.1f", bytesPerSec / (1024 * 1024))
+            return String(format: "%.1f", bitsPerSec / 1_000_000)
         }
     }
 
     /// Get unit for compact format
     static func formatCompactUnit(_ bytesPerSec: Double) -> String {
-        if bytesPerSec < 1024 {
-            return "B/s"
-        } else if bytesPerSec < 1024 * 1024 {
-            return "KB/s"
+        let bitsPerSec = bytesPerSec * 8
+        if bitsPerSec < 1_000 {
+            return "bps"
+        } else if bitsPerSec < 1_000_000 {
+            return "Kbps"
         } else {
-            return "MB/s"
+            return "Mbps"
         }
     }
 }

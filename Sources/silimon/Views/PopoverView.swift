@@ -105,6 +105,12 @@ struct PopoverView: View {
                 refreshProcesses()
             }
         }
+        .onDisappear {
+            // Reset to default view when popover closes
+            isSettingsMode = false
+            showDiagnostics = false
+            expandedMetric = nil
+        }
     }
 
     // MARK: - Process Helpers

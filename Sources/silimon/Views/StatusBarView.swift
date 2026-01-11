@@ -165,18 +165,19 @@ class StatusBarView: NSView, NSAccessibilityGroup {
         case .network:
             let totalBytesPerSec = metrics.networkBytesInPerSec + metrics.networkBytesOutPerSec
             let hasData = totalBytesPerSec > 0
-            // Show download speed in KB/s or MB/s
+            // Show download speed in Kbps or Mbps (bits, not bytes)
+            let bitsPerSec = metrics.networkBytesInPerSec * 8
             let displayValue: Double
             let unit: String
-            if metrics.networkBytesInPerSec < 1024 * 1024 {
-                displayValue = metrics.networkBytesInPerSec / 1024
+            if bitsPerSec < 1_000_000 {
+                displayValue = bitsPerSec / 1_000
                 unit = "K"
             } else {
-                displayValue = metrics.networkBytesInPerSec / 1024 / 1024
+                displayValue = bitsPerSec / 1_000_000
                 unit = "M"
             }
-            // Fill based on 10 MB/s max
-            let fillPercent = hasData ? min(metrics.networkBytesInPerSec / (10 * 1024 * 1024), 1.0) : 0
+            // Fill based on 100 Mbps max
+            let fillPercent = hasData ? min(bitsPerSec / 100_000_000, 1.0) : 0
             return (hasData, displayValue, fillPercent, unit, "arrow.down", color)
 
         case .battery:
