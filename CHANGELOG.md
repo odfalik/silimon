@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.38](https://github.com/odfalik/silimon/compare/v0.8.37...v0.8.38) (2026-01-25)
+
+
+### Features
+
+* add expandable CPU and Memory cards showing top processes ([fb27ae5](https://github.com/odfalik/silimon/commit/fb27ae5e9dc5c8aad7f500682074d48d34a3d879))
+
+
+### Bug Fixes
+
+* show expand chevron only on hover in top-right corner ([70db297](https://github.com/odfalik/silimon/commit/70db2978cf8833c5c31b673c4d80bfc691abc8ef))
+
 ## [0.8.37](https://github.com/odfalik/silimon/compare/v0.8.36...v0.8.37) (2026-01-11)
 
 
