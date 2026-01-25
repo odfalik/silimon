@@ -12,6 +12,8 @@ struct MetricRowView: View {
     var onTap: (() -> Void)? = nil
     var onSettingsChanged: () -> Void
 
+    @State private var isHovering = false
+
     private var color: Color {
         settings.color(for: metric)
     }
@@ -36,14 +38,9 @@ struct MetricRowView: View {
 
                 Spacer(minLength: 4)
 
-                // Right side - settings in settings mode, chevron for expandable metrics otherwise
+                // Right side - only settings in settings mode
                 if isSettingsMode {
                     settingsView
-                } else if isExpandable {
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.secondary.opacity(0.6))
-                        .frame(width: 14)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -82,7 +79,19 @@ struct MetricRowView: View {
             }
         )
         .cornerRadius(10)
+        .overlay(alignment: .topTrailing) {
+            // Expand/collapse indicator - only on hover or when expanded
+            if isExpandable && !isSettingsMode && (isHovering || isExpanded) {
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.secondary.opacity(0.7))
+                    .padding(6)
+            }
+        }
         .contentShape(Rectangle())
+        .onHover { hovering in
+            isHovering = hovering
+        }
         .onTapGesture {
             if !isSettingsMode && isExpandable {
                 onTap?()
