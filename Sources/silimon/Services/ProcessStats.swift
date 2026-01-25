@@ -24,6 +24,9 @@ class ProcessStats {
         var byMemory: [AppProcessInfo] = []
     }
 
+    /// Number of CPU cores for normalizing percentages
+    private let coreCount = Double(ProcessInfo.processInfo.processorCount)
+
     /// Get top processes by CPU and memory usage
     func getTopProcesses(limit: Int = 5) -> TopProcesses {
         var result = TopProcesses()
@@ -64,10 +67,14 @@ class ProcessStats {
                       command != "launchd" &&
                       !command.hasPrefix("com.apple.") else { continue }
 
+                // Normalize CPU percentage (ps reports per-core, so 800% means 8 cores at 100%)
+                // Divide by core count to get percentage of total CPU capacity
+                let normalizedCpu = cpu / coreCount
+
                 let process = AppProcessInfo(
                     id: pid,
                     name: command,
-                    cpuPercent: cpu,
+                    cpuPercent: normalizedCpu,
                     memoryMB: rss / 1024  // RSS is in KB
                 )
 

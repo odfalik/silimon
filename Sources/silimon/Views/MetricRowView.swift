@@ -7,55 +7,72 @@ struct MetricRowView: View {
     let samples: [Metrics]  // Direct array instead of @ObservedObject
     @ObservedObject var settings: Settings
     let isSettingsMode: Bool
+    var isExpanded: Bool = false
+    var processes: [AppProcessInfo] = []
+    var onTap: (() -> Void)? = nil
     var onSettingsChanged: () -> Void
 
     private var color: Color {
         settings.color(for: metric)
     }
 
+    private var isExpandable: Bool {
+        metric == .cpu || metric == .memory
+    }
+
     var body: some View {
-        HStack(spacing: 8) {
-            // Drag handle - compact, only in settings mode
-            if isSettingsMode {
-                Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.secondary.opacity(0.5))
-                    .frame(width: 14)
-            }
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                // Drag handle - compact, only in settings mode
+                if isSettingsMode {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary.opacity(0.5))
+                        .frame(width: 14)
+                }
 
-            // Stats
-            statsView
+                // Stats
+                statsView
 
-            Spacer(minLength: 4)
+                Spacer(minLength: 4)
 
-            // Right side - only settings in settings mode
-            if isSettingsMode {
-                settingsView
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            // Chart behind stats with fade
-            Group {
-                if !isSettingsMode {
-                    chartView
-                        .frame(height: 50)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .mask(
-                            LinearGradient(
-                                gradient: Gradient(stops: [
-                                    .init(color: .clear, location: 0),
-                                    .init(color: .clear, location: 0.25),
-                                    .init(color: .black, location: 0.4),
-                                    .init(color: .black, location: 1.0)
-                                ]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                // Right side - settings in settings mode, chevron for expandable metrics otherwise
+                if isSettingsMode {
+                    settingsView
+                } else if isExpandable {
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary.opacity(0.6))
+                        .frame(width: 14)
                 }
             }
-        )
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                // Chart behind stats with fade
+                Group {
+                    if !isSettingsMode {
+                        chartView
+                            .frame(height: 50)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .mask(
+                                LinearGradient(
+                                    gradient: Gradient(stops: [
+                                        .init(color: .clear, location: 0),
+                                        .init(color: .clear, location: 0.25),
+                                        .init(color: .black, location: 0.4),
+                                        .init(color: .black, location: 1.0)
+                                    ]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    }
+                }
+            )
+
+            // Process list when expanded
+            processListView
+        }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(
@@ -65,6 +82,12 @@ struct MetricRowView: View {
             }
         )
         .cornerRadius(10)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if !isSettingsMode && isExpandable {
+                onTap?()
+            }
+        }
     }
 
     // MARK: - Stats View
@@ -378,6 +401,46 @@ struct MetricRowView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Process List View
+
+    private var relevantProcesses: [AppProcessInfo] {
+        processes
+    }
+
+    private func formattedValue(for process: AppProcessInfo) -> String {
+        switch metric {
+        case .cpu:
+            return ProcessStats.formatCPU(process.cpuPercent)
+        case .memory:
+            return ProcessStats.formatMemory(process.memoryMB)
+        default:
+            return ""
+        }
+    }
+
+    @ViewBuilder
+    private var processListView: some View {
+        if isExpanded && !relevantProcesses.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                Divider()
+                    .padding(.vertical, 4)
+                ForEach(relevantProcesses) { process in
+                    HStack {
+                        Text(process.displayName)
+                            .font(.caption)
+                            .lineLimit(1)
+                        Spacer()
+                        Text(formattedValue(for: process))
+                            .font(.caption.monospacedDigit())
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(.top, 2)
+            .transition(.opacity.combined(with: .move(edge: .top)))
+        }
     }
 
     // MARK: - Chart View with Fade

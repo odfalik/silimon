@@ -8,6 +8,7 @@ struct PopoverView: View {
     @ObservedObject var alertService = AlertService.shared
     @ObservedObject var onboardingState = OnboardingState.shared
     @State private var isSettingsMode = false
+    @State private var expandedMetric: MetricType?
     @State private var draggedMetric: MetricType?
     @State private var showDiagnostics = false
     @State private var showExportMenu = false
@@ -19,6 +20,8 @@ struct PopoverView: View {
     @State private var showQuitConfirm = false
     @State private var isUpdating = false
     @State private var updateError: String?
+    @State private var topProcesses: [AppProcessInfo] = []
+    private let processStats = ProcessStats()
     var onSettingsChanged: () -> Void
 
     var body: some View {
@@ -53,6 +56,17 @@ struct PopoverView: View {
                                 samples: metricsCollector.history.samples,
                                 settings: settings,
                                 isSettingsMode: isSettingsMode,
+                                isExpanded: expandedMetric == metric,
+                                processes: processesFor(metric),
+                                onTap: (metric == .cpu || metric == .memory) ? {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        let newExpanded = expandedMetric == metric ? nil : metric
+                                        expandedMetric = newExpanded
+                                        if newExpanded != nil {
+                                            refreshProcesses()
+                                        }
+                                    }
+                                } : nil,
                                 onSettingsChanged: onSettingsChanged
                             )
                             .opacity(draggedMetric == metric ? 0.5 : (settings.isModuleEnabled(metric) ? 1.0 : 0.5))
@@ -85,6 +99,35 @@ struct PopoverView: View {
             }
         }
         .frame(width: 320, height: 400)
+        .onChange(of: metricsCollector.currentMetrics.id) { _ in
+            // Refresh processes when metrics update while expanded
+            if expandedMetric != nil {
+                refreshProcesses()
+            }
+        }
+    }
+
+    // MARK: - Process Helpers
+
+    private func processesFor(_ metric: MetricType) -> [AppProcessInfo] {
+        guard expandedMetric == metric else { return [] }
+        switch metric {
+        case .cpu:
+            return topProcesses.sorted { $0.cpuPercent > $1.cpuPercent }
+        case .memory:
+            return topProcesses.sorted { $0.memoryMB > $1.memoryMB }
+        default:
+            return []
+        }
+    }
+
+    private func refreshProcesses() {
+        let result = processStats.getTopProcesses(limit: 5)
+        // Combine and dedupe - we need both lists but they may overlap
+        var combined: [Int32: AppProcessInfo] = [:]
+        for p in result.byCPU { combined[p.id] = p }
+        for p in result.byMemory { combined[p.id] = p }
+        topProcesses = Array(combined.values)
     }
 
     // MARK: - Header
@@ -110,7 +153,13 @@ struct PopoverView: View {
                     .help(error)
             }
 
-            Button(action: { isSettingsMode.toggle() }) {
+            Button(action: {
+                if !isSettingsMode {
+                    // Collapse expanded metric when entering settings mode
+                    expandedMetric = nil
+                }
+                isSettingsMode.toggle()
+            }) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: isSettingsMode ? "xmark" : "gearshape.fill")
                         .foregroundColor(isSettingsMode ? .primary : .secondary)
