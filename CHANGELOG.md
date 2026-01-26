@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.39](https://github.com/odfalik/silimon/compare/v0.8.38...v0.8.39) (2026-01-26)
+
+
+### Bug Fixes
+
+* make popover charts respect history setting ([#57](https://github.com/odfalik/silimon/issues/57)) ([5a86c45](https://github.com/odfalik/silimon/commit/5a86c45ea6555ba127e77522800adaeba79f9760))
+
 ## [0.8.38](https://github.com/odfalik/silimon/compare/v0.8.37...v0.8.38) (2026-01-25)
 
 
