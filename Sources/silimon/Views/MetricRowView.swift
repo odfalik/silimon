@@ -505,14 +505,6 @@ struct MetricRowView: View {
         }
     }
 
-    // Limit samples for chart performance (more points than pixels is wasteful)
-    private var chartSamples: [Metrics] {
-        let maxSamples = 30  // Reduced for better performance
-        if samples.count <= maxSamples {
-            return samples
-        }
-        return Array(samples.suffix(maxSamples))
-    }
 
     private var fadeMask: some View {
         LinearGradient(
@@ -527,11 +519,10 @@ struct MetricRowView: View {
 
     @ViewBuilder
     private var chartContent: some View {
-        let displaySamples = chartSamples
-        if displaySamples.count > 1 {
+        if samples.count > 1 {
             Chart {
                 // Use array index for X-axis to ensure even spacing
-                ForEach(Array(displaySamples.enumerated()), id: \.element.id) { index, sample in
+                ForEach(Array(samples.enumerated()), id: \.element.id) { index, sample in
                     LineMark(
                         x: .value("Index", index),
                         y: .value("Value", ChartConfig.value(from: sample, for: metric))
