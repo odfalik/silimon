@@ -8,7 +8,7 @@ A lightweight macOS menu bar app for monitoring Apple Silicon performance metric
 ![macOS](https://img.shields.io/badge/macOS-13.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-[![Installs](https://img.shields.io/badge/dynamic/json?color=success&label=Installs&query=count&url=https://gist.githubusercontent.com/odfalik/1db282d76bd7d23920568875b72d8711/raw/clone.json&logo=homebrew)](https://github.com/odfalik/homebrew-silimon)
+[![Installs](https://img.shields.io/badge/dynamic/json?color=success&label=Installs&query=count&url=https://raw.githubusercontent.com/odfalik/homebrew-silimon/main/.github/clone-count/clone.json&logo=homebrew)](https://github.com/odfalik/homebrew-silimon)
 
 ## Why Silimon?
 
